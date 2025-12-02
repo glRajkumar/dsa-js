@@ -3,6 +3,63 @@ title: Types
 description: A comprehensive guide to understanding data types in JavaScript and how to work with them.
 ---
 
+## Overview
+
+JavaScript has two main categories of data types:
+
+```mermaid
+graph TD
+  A[Types] --> B[Primitive]
+  A --> C[Reference]
+  
+  B --> D[String]
+  B --> E[Number]
+  B --> F[Boolean]
+  B --> G[Undefined]
+  B --> H[Null]
+  B --> I[Symbol]
+  B --> J[BigInt]
+  
+  C --> K[Object]
+  K --> L[Plain Object]
+  K --> M[Array]
+  K --> N[Function]
+  K --> O[Date]
+  K --> P[RegExp]
+  K --> Q[Map/Set]
+  K --> R[Error]
+  
+  style B fill:#e1f5ff
+  style C fill:#fff4e1
+  style A fill:#f0f0f0
+```
+
+### Key Differences
+
+| Aspect | Primitive Types | Reference Types |
+|--------|----------------|-----------------|
+| **Storage** | Stored directly in the variable | Variable stores a reference to memory location |
+| **Mutability** | Immutable | Mutable |
+| **Comparison** | Compared by value | Compared by reference |
+| **Copy Behavior** | Creates independent copy | Creates reference to same object |
+
+
+```js
+// Primitive - Copy by value
+let a = 5
+let b = a
+b = 10
+console.log(a) // 5 (unchanged)
+
+// Reference - Copy by reference
+let obj1 = { value: 5 }
+let obj2 = obj1
+obj2.value = 10
+console.log(obj1.value) // 10 (changed!)
+```
+
+---
+
 ## Primitive Types
 
 JavaScript has 7 primitive data types:
@@ -246,6 +303,88 @@ value === null || value === undefined  // explicit check
 
 ---
 
+## Object.is() for Value Comparison
+
+`Object.is()` provides a more precise equality check than `===`, especially for special values.
+
+### Comparison with ===
+
+For most values, `Object.is()` behaves the same as `===`:
+
+```js
+// Case 1: Evaluation result is the same as using ===
+Object.is(25, 25)                // true
+Object.is('foo', 'foo')          // true
+Object.is('foo', 'bar')          // false
+Object.is(null, null)            // true
+Object.is(undefined, undefined)  // true
+Object.is(window, window)        // true
+Object.is([], [])                // false
+
+let foo = { a: 1 }
+let bar = { a: 1 }
+Object.is(foo, foo)              // true
+Object.is(foo, bar)              // false
+```
+
+### Special Case: Signed Zero
+
+`Object.is()` distinguishes between `+0` and `-0`, while `===` treats them as equal:
+
+```js
+// Case 2: Signed zero
+Object.is(0, -0)                 // false
+Object.is(+0, -0)                // false
+Object.is(-0, -0)                // true
+Object.is(0n, -0n)               // true
+
+// Compare with ===
+0 === -0                         // true
++0 === -0                        // true
+```
+
+### Special Case: NaN
+
+`Object.is()` correctly identifies `NaN` as equal to itself, while `===` does not:
+
+```js
+// Case 3: NaN
+Object.is(NaN, 0 / 0)            // true
+Object.is(NaN, Number.NaN)       // true
+
+// Compare with ===
+NaN === NaN                      // false
+NaN === Number.NaN               // false
+
+// Use Number.isNaN() for NaN checks
+Number.isNaN(NaN)                // true
+```
+
+### When to Use Object.is()
+
+```js
+// Use Object.is() when you need to distinguish:
+
+// 1. Positive and negative zero
+function safeDivide(a, b) {
+  if (Object.is(b, -0)) {
+    return -Infinity
+  }
+  return a / b
+}
+
+// 2. NaN values
+function isActuallyNaN(value) {
+  return Object.is(value, NaN)
+}
+
+// 3. Use === for everything else (it's faster)
+value === 42
+value === 'hello'
+```
+
+---
+
 ## Type Coercion
 
 JavaScript automatically converts types in certain situations.
@@ -302,6 +441,239 @@ Boolean(NaN)                // false
 ```
 
 All other values are truthy.
+
+---
+
+## Special Type Behaviors
+
+### Primitive Immutability
+
+Primitives are immutable - their values cannot be changed:
+
+```js
+let str = 'hello'
+str[0] = 'H'  // No effect
+console.log(str)  // 'hello'
+
+// String methods return new strings
+let upper = str.toUpperCase()  // Creates new string
+console.log(str)    // 'hello' (original unchanged)
+console.log(upper)  // 'HELLO' (new string)
+```
+
+### Primitive Auto-boxing
+
+JavaScript automatically wraps primitives in objects when accessing properties:
+
+```js
+let str = 'hello'
+console.log(str.length)        // 5
+console.log(str.toUpperCase()) // 'HELLO'
+
+// Behind the scenes:
+// temp = new String('hello')
+// temp.length
+// temp is discarded
+
+// You can't add properties to primitives
+str.customProperty = 'value'
+console.log(str.customProperty) // undefined
+```
+
+### Number Precision Issues
+
+JavaScript uses IEEE 754 floating-point arithmetic:
+
+```js
+0.1 + 0.2                      // 0.30000000000000004
+0.1 + 0.2 === 0.3              // false
+
+// Solution: Use epsilon comparison
+Math.abs((0.1 + 0.2) - 0.3) < Number.EPSILON  // true
+
+// Or work with integers
+(1 + 2) / 10 === 0.3           // true
+
+// Safe integer range
+Number.MAX_SAFE_INTEGER        // 9007199254740991
+Number.MIN_SAFE_INTEGER        // -9007199254740991
+
+// For larger integers, use BigInt
+const big = 9007199254740991n + 1n  // 9007199254740992n
+```
+
+### Void Operator
+
+The `void` operator evaluates an expression and returns `undefined`:
+
+```js
+void 0                         // undefined
+void(0)                        // undefined
+void 2 + 2                     // NaN (void has higher precedence)
+void (2 + 2)                   // undefined
+
+// Common use: ensuring undefined
+let value = void 0             // guaranteed undefined
+
+// In links to prevent navigation
+<a href="javascript:void(0)">Click</a>
+```
+
+### Dynamic Typing
+
+Variables can change types:
+
+```js
+let value = 42                 // number
+value = 'hello'                // now string
+value = true                   // now boolean
+value = { name: 'John' }       // now object
+
+// This flexibility can lead to bugs
+function add(a, b) {
+  return a + b
+}
+
+add(5, 10)                     // 15
+add('5', 10)                   // "510" (oops!)
+```
+
+### Type Conversion Edge Cases
+
+```js
+// Empty array to number
++[]                            // 0
++[5]                           // 5
++[1, 2]                        // NaN
+
+// Boolean to number
++true                          // 1
++false                         // 0
+
+// String to number
++'42'                          // 42
++'   42   '                    // 42 (whitespace trimmed)
++'42px'                        // NaN
+parseInt('42px')               // 42 (stops at non-digit)
+
+// Object to primitive
+({}).toString()                // "[object Object]"
+[1, 2, 3].toString()          // "1,2,3"
+
+// Addition vs concatenation
+1 + 2 + '3'                    // "33"
+'1' + 2 + 3                    // "123"
+```
+
+### Symbol Uniqueness
+
+Symbols are always unique, even with the same description:
+
+```js
+let sym1 = Symbol('id')
+let sym2 = Symbol('id')
+sym1 === sym2                  // false
+
+// Global symbol registry
+let globalSym1 = Symbol.for('id')
+let globalSym2 = Symbol.for('id')
+globalSym1 === globalSym2      // true
+
+// Use case: Object property keys
+const ID = Symbol('id')
+let user = {
+  name: 'John',
+  [ID]: 12345
+}
+
+Object.keys(user)              // ['name'] (Symbol not enumerated)
+user[ID]                       // 12345
+```
+
+### WeakMap and WeakSet
+
+Special collections that don't prevent garbage collection:
+
+```js
+// WeakMap - keys must be objects
+let weakMap = new WeakMap()
+let obj = { data: 'value' }
+
+weakMap.set(obj, 'metadata')
+console.log(weakMap.get(obj))  // 'metadata'
+
+obj = null  // Object can be garbage collected
+
+// WeakSet - values must be objects
+let weakSet = new WeakSet()
+let element = { id: 1 }
+
+weakSet.add(element)
+weakSet.has(element)           // true
+
+element = null  // Can be garbage collected
+```
+
+### Proxy and Reflect
+
+Meta-programming with objects:
+
+```js
+// Proxy - intercept object operations
+let target = { value: 42 }
+let proxy = new Proxy(target, {
+  get(target, property) {
+    console.log(`Reading ${property}`)
+    return target[property]
+  },
+  set(target, property, value) {
+    console.log(`Writing ${property} = ${value}`)
+    target[property] = value
+    return true
+  }
+})
+
+proxy.value        // Logs: "Reading value", returns 42
+proxy.value = 100  // Logs: "Writing value = 100"
+
+// Reflect - perform operations programmatically
+Reflect.has(target, 'value')              // true
+Reflect.get(target, 'value')              // 100
+Reflect.set(target, 'value', 200)         // true
+Reflect.deleteProperty(target, 'value')   // true
+```
+
+### JSON Limitations
+
+Not all types can be serialized to JSON:
+
+```js
+// Types that JSON.stringify handles
+JSON.stringify({
+  string: 'hello',
+  number: 42,
+  boolean: true,
+  null: null,
+  array: [1, 2, 3],
+  object: { nested: true }
+})
+
+// Types that become null or undefined
+JSON.stringify({
+  fn: function() {},          // undefined (omitted)
+  undef: undefined,           // undefined (omitted)
+  sym: Symbol('id'),          // undefined (omitted)
+  bigint: 123n               // Error: BigInt not supported
+})
+
+// Special values
+JSON.stringify(NaN)          // "null"
+JSON.stringify(Infinity)     // "null"
+JSON.stringify(-Infinity)    // "null"
+
+// Dates become strings
+JSON.stringify(new Date())   // "2024-01-15T12:00:00.000Z"
+```
 
 ---
 

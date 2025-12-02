@@ -1,7 +1,6 @@
 import { useMemo } from 'react'
 import { DocsBody, DocsDescription, DocsPage, DocsTitle } from 'fumadocs-ui/layouts/docs/page'
 import { createFileRoute, notFound } from '@tanstack/react-router'
-import defaultMdxComponents from 'fumadocs-ui/mdx'
 import browserCollections from 'fumadocs-mdx:collections/browser'
 import { createServerFn } from '@tanstack/react-start'
 import { DocsLayout } from 'fumadocs-ui/layouts/docs'
@@ -10,6 +9,8 @@ import type * as PageTree from 'fumadocs-core/page-tree'
 
 import { baseOptions } from '@/lib/layout.shared'
 import { source } from '@/lib/source'
+
+import { getMDXComponents } from '@/components/fuma-ui'
 
 export const Route = createFileRoute('/docs/$')({
   component: Page,
@@ -43,9 +44,7 @@ const clientLoader = browserCollections.docs.createClientLoader({
         <DocsDescription>{frontmatter.description}</DocsDescription>
         <DocsBody>
           <MDX
-            components={{
-              ...defaultMdxComponents,
-            }}
+            components={getMDXComponents()}
           />
         </DocsBody>
       </DocsPage>
