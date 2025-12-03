@@ -1,0 +1,116 @@
+---
+title: Weak Set
+description: A comprehensive guide to understanding weak set in JavaScript and how to work with them.
+---
+
+## Introduction
+
+The **WeakSet** is a collection that stores weakly held objects. Like WeakMap, the objects are weakly referenced and can be garbage collected if there are no other references to them.
+
+### Key Characteristics
+
+- Can only contain objects (not primitives)
+- Objects are held weakly - they don't prevent garbage collection
+- Not enumerable - cannot iterate over values
+- No `size` property
+- No `clear()` method
+- No way to retrieve values
+
+### Creating a WeakSet
+
+```js
+let ws = new WeakSet()
+
+let foo = {}
+let bar = {}
+```
+
+### Methods
+
+#### add(value)
+
+Appends a new object to the end of a WeakSet. The value must be an object. Returns the WeakSet object, allowing for method chaining.
+
+```js
+let ws = new WeakSet()
+let foo = {}
+let bar = {}
+
+ws.add(foo)
+ws.add(bar)
+
+// Chainable
+ws.add(foo).add(bar)
+
+// This throws TypeError - primitives not allowed
+// ws.add(1)
+// ws.add('string')
+// ws.add(true)
+```
+
+#### has(value)
+
+Returns a boolean indicating whether an object exists in the WeakSet.
+
+```js
+ws.has(foo)    // true
+ws.has(bar)    // true
+ws.has({})     // false (different object reference)
+```
+
+#### delete(value)
+
+Removes the specified element from a WeakSet. Returns `true` if the element existed and was removed, `false` otherwise.
+
+```js
+ws.delete(foo) // true
+ws.has(foo)    // false
+ws.delete(foo) // false (already deleted)
+```
+
+### Use Cases
+
+WeakSets are particularly useful for:
+
+```js
+// Tracking objects without preventing garbage collection
+const processedObjects = new WeakSet()
+
+function processObject(obj) {
+  if (processedObjects.has(obj)) {
+    return // Already processed
+  }
+  
+  // Process the object
+  console.log('Processing:', obj)
+  
+  processedObjects.add(obj)
+}
+
+// Marking objects as special
+const disabledElements = new WeakSet()
+
+function disableElement(element) {
+  disabledElements.add(element)
+  element.classList.add('disabled')
+}
+
+function isDisabled(element) {
+  return disabledElements.has(element)
+}
+
+// Preventing circular references in recursive functions
+function traverseDOM(node, visited = new WeakSet()) {
+  if (visited.has(node)) return
+  
+  visited.add(node)
+  
+  // Process node
+  console.log(node.tagName)
+  
+  // Traverse children
+  for (let child of node.children) {
+    traverseDOM(child, visited)
+  }
+}
+```

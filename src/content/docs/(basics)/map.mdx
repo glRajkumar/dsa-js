@@ -1,0 +1,172 @@
+---
+title: Map
+description: A comprehensive guide to understanding mao in JavaScript and how to work with them.
+---
+
+## Introduction
+
+The **Map** is a collection data structure that holds key-value pairs and remembers the original insertion order of the keys. Unlike plain objects, a Map's keys can be any value including functions, objects, or primitives. Maps are iterable and can be directly iterated over.
+
+### Creating a Map
+
+```js
+let map1 = new Map()
+
+// Creating with initial values
+let map2 = new Map([
+  ['key1', 'value1'],
+  ['key2', 'value2']
+])
+```
+
+### Methods
+
+#### set(key, value)
+
+Adds or updates an element with a specified key and value to a Map object. Returns the Map object, allowing for method chaining.
+
+```js
+let map = new Map()
+map.set('a', 'b')
+map.set('a2', 'b2')
+map.set('a', 'updated') // Updates existing key
+// Map(2) {"a" => "updated", "a2" => "b2"}
+```
+
+#### get(key)
+
+Returns the value associated with the specified key. If the key doesn't exist, returns `undefined`. If the value is an object, you get a reference to that object.
+
+```js
+map.get('a')     // "updated"
+map.get('c')     // undefined
+```
+
+#### has(key)
+
+Returns a boolean indicating whether an element with the specified key exists.
+
+```js
+map.has('a')     // true
+map.has('c')     // false
+```
+
+#### delete(key)
+
+Removes the specified element from a Map object by key. Returns `true` if the element existed and was removed, `false` otherwise.
+
+```js
+map.delete('d')  // false
+map.delete('a')  // true
+```
+
+#### clear()
+
+Removes all elements from a Map object.
+
+```js
+map.clear()
+map.size // 0
+```
+
+### Properties
+
+#### size
+
+Returns the number of key-value pairs in the Map.
+
+```js
+let map = new Map()
+map.set('a', 1)
+map.set('b', 2)
+map.size // 2
+```
+
+### Iteration Methods
+
+#### entries()
+
+Returns a new Iterator object that contains `[key, value]` pairs for each element in insertion order.
+
+```js
+let map = new Map([['0', 'foo'], [1, 'bar']])
+let iterator = map.entries()
+
+iterator.next().value  // ["0", "foo"]
+iterator.next().value  // [1, "bar"]
+
+// Using for...of
+for (let [key, val] of map.entries()) {
+  console.log(key, val)
+}
+// "0" "foo"
+// 1 "bar"
+```
+
+#### keys()
+
+Returns a new Iterator object that contains the keys for each element in insertion order.
+
+```js
+let map = new Map([['a', 1], ['b', 2]])
+let keyIterator = map.keys()
+
+for (let key of keyIterator) {
+  console.log(key)
+}
+// "a"
+// "b"
+```
+
+#### values()
+
+Returns a new Iterator object that contains the values for each element in insertion order.
+
+```js
+let map = new Map([['a', 1], ['b', 2]])
+let valueIterator = map.values()
+
+for (let value of valueIterator) {
+  console.log(value)
+}
+// 1
+// 2
+```
+
+#### forEach(callbackFn, thisArg)
+
+Executes a provided function once per each key-value pair in insertion order.
+
+**Syntax:** `forEach((value, key, map) => { ... }, thisArg)`
+
+The callback function receives three arguments:
+- `value` - The value of the current element
+- `key` - The key of the current element
+- `map` - The Map object being traversed
+
+```js
+let map = new Map([['foo', 3], ['bar', {}], ['baz', undefined]])
+
+map.forEach((val, key, map) => {
+  console.log(val, key)
+})
+// 3 "foo"
+// {} "bar"
+// undefined "baz"
+```
+
+### Converting Between Map and Other Data Types
+
+```js
+// Map to Array
+let map = new Map([['a', 1], ['b', 2]])
+let arr = Array.from(map) // [['a', 1], ['b', 2]]
+let arr2 = [...map] // [['a', 1], ['b', 2]]
+
+// Object to Map
+let obj = { a: 1, b: 2 }
+let mapFromObj = new Map(Object.entries(obj))
+
+// Map to Object
+let objFromMap = Object.fromEntries(map)
+```

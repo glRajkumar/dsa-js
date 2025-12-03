@@ -1,0 +1,168 @@
+---
+title: Set
+description: A comprehensive guide to understanding set in JavaScript and how to work with them.
+---
+
+## Introduction
+
+The **Set** is a collection that stores unique values of any type, whether primitive values or object references. A value in a Set may only occur once.
+
+### Special Characteristics
+
+- `NaN` and `undefined` can be stored in a Set
+- All `NaN` values are equated (i.e., `NaN` is considered the same as `NaN`, even though `NaN !== NaN`)
+- `-0` and `+0` are considered equal
+
+### Creating a Set
+
+```js
+let set1 = new Set()
+
+// Creating with initial values
+let set2 = new Set([1, 2, 3, 4, 4]) // Set(4) {1, 2, 3, 4}
+```
+
+### Methods
+
+#### add(value)
+
+Appends a new element with the specified value to the end of a Set. Returns the Set object, allowing for method chaining.
+
+```js
+let set = new Set()
+set.add(42)
+set.add(42) // Duplicate, won't be added
+set.add(13)
+set.add(5).add('some text') // Chaining
+// Set(4) {42, 13, 5, "some text"}
+```
+
+#### has(value)
+
+Returns a boolean indicating whether an element with the specified value exists in the Set.
+
+```js
+set.has(42)   // true
+set.has(66)   // false
+```
+
+#### delete(value)
+
+Removes a specified value from a Set object. Returns `true` if the value existed and was removed, `false` otherwise.
+
+```js
+set.delete(42) // true
+set.delete(99) // false
+```
+
+#### clear()
+
+Removes all elements from a Set.
+
+```js
+set.clear()
+set.size // 0
+```
+
+### Properties
+
+#### size
+
+Returns the number of elements in a Set.
+
+```js
+let set = new Set([1, 2, 3])
+set.size // 3
+```
+
+### Iteration Methods
+
+#### values()
+
+Returns a new Iterator object that contains the values for each element in insertion order. This is the primary iteration method for Sets.
+
+```js
+let set = new Set([42, "forty two"])
+let iterator = set.values()
+
+iterator.next().value // 42
+iterator.next().value // "forty two"
+
+// Using for...of
+for (let item of set.values()) {
+  console.log(item)
+}
+// 42
+// "forty two"
+```
+
+#### keys()
+
+Since Sets don't have keys, this method behaves identically to `values()`. It returns a new Iterator object that contains the values.
+
+```js
+let set = new Set([1, 2, 3])
+for (let key of set.keys()) {
+  console.log(key) // 1, 2, 3
+}
+```
+
+#### entries()
+
+Returns a new Iterator object that contains an array of `[value, value]` for each element in insertion order. Both elements in the array are the same because Sets don't have separate keys.
+
+```js
+let set = new Set([42, "forty two"])
+let iterator = set.entries()
+
+for (let entry of iterator) {
+  console.log(entry)
+}
+// [42, 42]
+// ["forty two", "forty two"]
+```
+
+#### forEach(callbackFn, thisArg)
+
+Executes a provided function once for each value in insertion order.
+
+**Syntax:** `forEach((value, key, set) => { ... }, thisArg)`
+
+The callback function receives three arguments:
+- `value` - The value of the current element
+- `key` - Same as value (for consistency with Map)
+- `set` - The Set object being traversed
+
+```js
+let set = new Set([42, "forty two"])
+
+set.forEach(value => {
+  console.log(value)
+})
+// 42
+// "forty two"
+```
+
+### Set Operations (Useful Patterns)
+
+```js
+let setA = new Set([1, 2, 3, 4])
+let setB = new Set([3, 4, 5, 6])
+
+// Union
+let union = new Set([...setA, ...setB])
+// Set(6) {1, 2, 3, 4, 5, 6}
+
+// Intersection
+let intersection = new Set([...setA].filter(x => setB.has(x)))
+// Set(2) {3, 4}
+
+// Difference
+let difference = new Set([...setA].filter(x => !setB.has(x)))
+// Set(2) {1, 2}
+
+// Remove duplicates from array
+let arr = [1, 2, 2, 3, 3, 4]
+let uniqueArr = [...new Set(arr)]
+// [1, 2, 3, 4]
+```

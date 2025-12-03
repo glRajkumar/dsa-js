@@ -7,6 +7,10 @@
     "types",
     "string",
     "object",
-    "array"
+    "array",
+    "map",
+    "set",
+    "weak map",
+    "weak set"
   ]
 }

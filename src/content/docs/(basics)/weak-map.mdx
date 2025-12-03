@@ -1,0 +1,122 @@
+---
+title: Weak Map
+description: A comprehensive guide to understanding weak map in JavaScript and how to work with them.
+---
+
+## Introduction
+
+The **WeakMap** is a collection of key-value pairs where the keys are weakly referenced. This means that if there are no other references to a key object, it can be garbage collected.
+
+### Key Characteristics
+
+- Keys **must** be objects (not primitives)
+- Keys are held weakly - they don't prevent garbage collection
+- Not enumerable - cannot iterate over entries
+- No `size` property
+- No `clear()` method
+- Values can be any arbitrary type
+
+### Creating a WeakMap
+
+```js
+let wm = new WeakMap()
+
+let obj1 = {}
+let obj2 = function() {}
+let obj3 = window
+```
+
+### Methods
+
+#### set(key, value)
+
+Adds a new element with a specified key and value to a WeakMap. The key must be an object. Returns the WeakMap object, allowing for method chaining.
+
+```js
+let wm = new WeakMap()
+let o1 = {}
+let o2 = function() {}
+let o3 = window
+
+wm.set(o1, 37)
+wm.set(o2, 'azerty')
+wm.set(o3, undefined)
+wm.set(['hi'], 'i am Raj') // Array is an object, so valid
+
+// Chainable
+wm.set(o1, 'foo').set(o2, 'bar')
+
+// Update existing value
+wm.set(o3, 'hi') // Updates value for o3
+
+// This throws TypeError - primitives not allowed
+// wm.set('hi', 44)
+// wm.set(42, 'value')
+```
+
+#### get(key)
+
+Returns the value associated with the specified key, or `undefined` if the key doesn't exist.
+
+```js
+wm.get(o1)      // 37
+wm.get(o2)      // "azerty"
+wm.get(o3)      // "hi"
+wm.get({})      // undefined (different object reference)
+```
+
+#### has(key)
+
+Returns a boolean indicating whether an element with the specified key exists in the WeakMap.
+
+```js
+wm.has(o1)      // true
+wm.has({})      // false (different object reference)
+```
+
+#### delete(key)
+
+Removes the specified element from a WeakMap. Returns `true` if the element existed and was removed, `false` otherwise.
+
+```js
+wm.delete(o1)   // true
+wm.has(o1)      // false
+wm.delete(o1)   // false (already deleted)
+```
+
+### Use Cases
+
+WeakMaps are particularly useful for:
+
+```js
+// Private data for objects
+const privateData = new WeakMap()
+
+class Person {
+  constructor(name, age) {
+    privateData.set(this, { name, age })
+  }
+  
+  getName() {
+    return privateData.get(this).name
+  }
+}
+
+// Caching computed values
+const cache = new WeakMap()
+
+function expensiveOperation(obj) {
+  if (cache.has(obj)) {
+    return cache.get(obj)
+  }
+  
+  let result = /* expensive computation */
+  cache.set(obj, result)
+  return result
+}
+
+// DOM node metadata (node removed = metadata garbage collected)
+const metadata = new WeakMap()
+let element = document.getElementById('myElement')
+metadata.set(element, { clickCount: 0, lastClick: null })
+```
