@@ -1,0 +1,571 @@
+---
+title: String
+description: A comprehensive guide to understanding string in JavaScript and how to work with them.
+---
+
+## Creating Strings
+
+Strings can be created using single quotes, double quotes, template literals, or the String constructor:
+
+```js
+let str1 = "A string primitive"
+let str2 = 'Also a string primitive'
+let str3 = `Yet another string primitive which has embedded expression ${0 + 1}`
+let str4 = new String("A String object")
+```
+
+**Note:** Template literals (backticks) support string interpolation and multi-line strings, making them the preferred choice for dynamic content.
+
+## Instance Properties
+
+### length
+
+Returns the length of the string.
+
+```js
+let str5 = "Raj"
+str5.length  // 3
+```
+
+## Static Methods
+
+### String.fromCharCode()
+
+Returns a string created from the specified sequence of UTF-16 code units.
+
+**Syntax:** `String.fromCharCode(num1, num2, ..., numN)`
+
+```js
+String.fromCharCode(65)          // "A"
+String.fromCharCode(65, 66, 67)  // "ABC"
+```
+
+### String.fromCodePoint()
+
+Returns a string created by using the specified sequence of code points. This method handles code points beyond the Basic Multilingual Plane better than `fromCharCode()`.
+
+**Syntax:** `String.fromCodePoint(num1, num2, ..., numN)`
+
+```js
+String.fromCodePoint(65, 90)    // "AZ"
+String.fromCodePoint(9733, 9734, 9735) // "★☆☆"
+```
+
+### String.raw()
+
+Returns a raw string form of a template literal, where escape sequences are not processed.
+
+**Syntax:** `String.raw(callSite, ...substitutions)` or `String.raw`templateString``
+
+```js
+String.raw`Hi\n${2+3}!`  // "Hi\\n5!" (the \n is not interpreted)
+String.raw`C:\Users\Documents`  // "C:\Users\Documents"
+```
+
+## Instance Methods
+
+### charAt()
+
+Returns the character at the specified index. Prefer array-like syntax for modern code.
+
+**Syntax:** `charAt(index = 0)`
+
+```js
+let sentence = 'The quick brown fox jumps over the lazy dog.'
+sentence.charAt()    // 'T'
+sentence.charAt(2)   // 'e'
+sentence.charAt(200) // ''
+
+// Preferred approach
+sentence[2]    // 'e'
+sentence[200]  // undefined
+```
+
+### charCodeAt()
+
+Returns an integer between 0 and 65535 representing the UTF-16 code unit at the given index.
+
+**Syntax:** `charCodeAt(index = 0)`
+
+Returns `NaN` if index is out of range.
+
+```js
+'ABC'.charCodeAt()  // 65
+'ABC'.charCodeAt(1) // 66
+'ABC'.charCodeAt(5) // NaN
+```
+
+### codePointAt()
+
+Returns a non-negative integer that is the UTF-16 code point value. Returns `undefined` if there is no element at the specified position.
+
+**Syntax:** `codePointAt(index)`
+
+```js
+'ABC'.codePointAt(1) // 66
+'😀'.codePointAt(0)  // 128512
+```
+
+### concat()
+
+Concatenates string arguments to the calling string and returns a new string. Template literals are generally preferred for readability.
+
+**Syntax:** `concat(str1, str2, ..., strN)`
+
+```js
+let greetList = ['Hello', ' ', 'Venkat', '!']
+"".concat(...greetList)  // "Hello Venkat!"
+
+let firstName = "Raj", secName = "kumar"
+let h1 = "".concat(firstName, " ", secName)  // "Raj kumar"
+let h2 = `${firstName} ${secName}`           // "Raj kumar" (preferred)
+```
+
+### includes()
+
+Performs a case-sensitive search to determine whether one string may be found within another string.
+
+**Syntax:** `includes(searchString, position = 0)`
+
+```js
+'Blue Whale'.includes('blue')  // false
+'Blue Whale'.includes('Blue')  // true
+'Blue Whale'.includes('Whale', 5)  // true
+```
+
+### indexOf()
+
+Returns the index of the first occurrence of the specified value, or -1 if not found.
+
+**Syntax:** `indexOf(searchValue, fromIndex = 0)`
+
+For `fromIndex` values lower than 0 or greater than `str.length`, the search starts at index 0 and `str.length`, respectively.
+
+```js
+'Blue Whale'.indexOf('')          //  0
+'Blue Whale'.indexOf('', 9)       //  9
+'Blue Whale'.indexOf('', 10)      // 10
+'Blue Whale'.indexOf('', 11)      // 10
+'Blue Whale'.indexOf('Blue')      //  0
+'Blue Whale'.indexOf('Blute')     // -1
+'Blue Whale'.indexOf('Whale', 0)  //  5
+'Blue Whale'.indexOf('Whale', 5)  //  5
+'Blue Whale'.indexOf('Whale', 7)  // -1
+'Blue Whale'.indexOf('blue')      // -1
+```
+
+### lastIndexOf()
+
+Returns the index of the last occurrence of the specified value, searching backwards from `fromIndex`. Returns -1 if not found.
+
+**Syntax:** `lastIndexOf(searchValue, fromIndex = +Infinity)`
+
+```js
+'canal'.lastIndexOf('a')     // 3
+'canal'.lastIndexOf('a', 2)  // 1
+'canal'.lastIndexOf('a', 0)  // -1
+'canal'.lastIndexOf('x')     // -1
+'canal'.lastIndexOf('c', -5) // 0
+'canal'.lastIndexOf('c', 0)  // 0
+'canal'.lastIndexOf('')      // 5
+'canal'.lastIndexOf('', 2)   // 2
+'abab'.lastIndexOf('ab', 2)  // 2
+```
+
+### localeCompare()
+
+Returns a number indicating whether a reference string comes before, after, or is the same as the given string in sort order.
+
+**Syntax:** `localeCompare(compareString, locales, options)`
+
+- Negative when the reference string occurs before compare string
+- Positive when the reference string occurs after compare string
+- Returns 0 if they are equivalent
+
+```js
+'a'.localeCompare('c') // -2 or -1 (negative value)
+'check'.localeCompare('against') // 2 or 1 (positive value)
+'a'.localeCompare('a') // 0
+
+let items = ['réservé', 'Premier', 'Cliché', 'communiqué', 'café', 'Adieu']
+items.sort((a, b) => a.localeCompare(b, 'fr', { ignorePunctuation: true }))
+// ['Adieu', 'café', 'Cliché', 'communiqué', 'Premier', 'réservé']
+```
+
+### match()
+
+Retrieves the result of matching a string against a regular expression.
+
+**Syntax:** `match(regexp)`
+
+```js
+let str6 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'
+str6.match(/[A-E]/gi) // ['A', 'B', 'C', 'D', 'E', 'a', 'b', 'c', 'd', 'e']
+
+'2023-12-25'.match(/\d+/g) // ['2023', '12', '25']
+```
+
+### matchAll()
+
+Returns an iterator of all results matching a string against a regular expression, including capturing groups.
+
+**Syntax:** `matchAll(regexp)`
+
+The regular expression must have the global (`g`) flag.
+
+```js
+const regexp = /t(e)(st(\d?))/g
+const str = 'test1test2'
+const matches = [...str.matchAll(regexp)]
+// matches[0]: ['test1', 'e', 'st1', '1']
+// matches[1]: ['test2', 'e', 'st2', '2']
+```
+
+### normalize()
+
+Returns the Unicode Normalization Form of the string.
+
+**Syntax:** `normalize(form = "NFC")`
+
+Forms: `"NFC"`, `"NFD"`, `"NFKC"`, `"NFKD"`
+
+```js
+let str = '\u1E9B\u0323'
+str.normalize('NFC') // normalized form
+```
+
+### repeat()
+
+Constructs and returns a new string with the specified number of copies concatenated together.
+
+**Syntax:** `repeat(count)`
+
+Count must be non-negative, less than infinity, and not overflow maximum string size.
+
+```js
+'abc'.repeat(-1)    // RangeError
+'abc'.repeat(0)     // ''
+'abc'.repeat(1)     // 'abc'
+'abc'.repeat(2)     // 'abcabc'
+'abc'.repeat(3.5)   // 'abcabcabc' (count converted to integer)
+'abc'.repeat(1 / 0) // RangeError
+```
+
+### replace()
+
+Returns a new string with some or all matches of a pattern replaced by a replacement. If pattern is a string, only the first occurrence will be replaced.
+
+**Syntax:** `replace(regexp | substr, newSubstr | replacerFunction)`
+
+```js
+let p = 'The quick brown fox jumps over the lazy dog. If the dog reacted, was it really lazy?'
+p.replace('dog', 'monkey')      // "The quick brown fox jumps over the lazy monkey. If the dog reacted, was it really lazy?"
+p.replace(/Dog/i, 'ferret')     // "The quick brown fox jumps over the lazy ferret. If the dog reacted, was it really lazy?"
+
+// Using replacer function
+'abc123def'.replace(/\d+/, (match) => match * 2) // 'abc246def'
+```
+
+### replaceAll()
+
+Returns a new string with all matches of a pattern replaced by a replacement.
+
+**Syntax:** `replaceAll(regexp | substr, newSubstr | replacerFunction)`
+
+```js
+let p = 'The quick brown fox jumps over the lazy dog. If the dog reacted, was it really lazy?'
+p.replaceAll('dog', 'monkey')   // "The quick brown fox jumps over the lazy monkey. If the monkey reacted, was it really lazy?"
+p.replaceAll(/Dog/ig, 'ferret') // "The quick brown fox jumps over the lazy ferret. If the ferret reacted, was it really lazy?"
+```
+
+### search()
+
+Executes a search for a match between a regular expression and this string. Returns the index of the first match, or -1 if no match was found.
+
+**Syntax:** `search(regexp)`
+
+```js
+let p = 'The quick brown fox jumps over the lazy dog. If the dog reacted, was it really lazy?'
+p.search(/[^\w\s]/g) // 43 (any character that is not a word character or whitespace)
+p.search(/lazy/) // 35
+```
+
+### slice()
+
+Extracts a section of a string and returns it as a new string, without modifying the original string.
+
+**Syntax:** `slice(beginIndex = 0, endIndex)`
+
+Negative indices count from the end. If `beginIndex >= str.length`, returns an empty string.
+
+```js
+let str7 = 'The morning is upon us.' // length is 23
+str7.slice(1, 8)     // "he morn"
+str7.slice(4, -2)    // "morning is upon u"
+str7.slice(12)       // "is upon us."
+str7.slice(30)       // ""
+str7.slice(-3)       // "us."
+str7.slice(-3, -1)   // "us"
+str7.slice(0, -1)    // "The morning is upon us"
+str7.slice(-11, 16)  // "is u"
+str7.slice(11, -7)   // " is u"
+str7.slice(-5, -1)   // "n us"
+```
+
+### split()
+
+Divides a string into an ordered list of substrings, puts them into an array, and returns the array.
+
+**Syntax:** `split(separator, limit)`
+
+```js
+let sentence = 'The quick brown fox jumps over the lazy dog.'
+
+sentence.split()         // ['The quick brown fox jumps over the lazy dog.']
+sentence.split("")       // ['T', 'h', 'e', ' ', 'q', ..., '.']
+sentence.split(" ")      // ['The', 'quick', 'brown', 'fox', 'jumps', 'over', 'the', 'lazy', 'dog.']
+sentence.split("fox")    // ['The quick brown ', ' jumps over the lazy dog.']
+sentence.split(" ", 0)   // []
+sentence.split(" ", 4)   // ['The', 'quick', 'brown', 'fox']
+sentence.split(" ", -3)  // ['The', 'quick', 'brown', 'fox', 'jumps', 'over', 'the', 'lazy', 'dog.']
+sentence.split(" ", 60)  // ['The', 'quick', 'brown', 'fox', 'jumps', 'over', 'the', 'lazy', 'dog.']
+
+// With regex
+'a1b2c3'.split(/\d/)     // ['a', 'b', 'c', '']
+```
+
+### substring()
+
+Returns the part of the string between the start and end indexes, or to the end of the string.
+
+**Syntax:** `substring(indexStart, indexEnd)`
+
+- Extracts characters from `indexStart` up to but not including `indexEnd`
+- If `indexStart > indexEnd`, arguments are swapped
+- Negative values are treated as 0
+- Values greater than `length` are treated as `length`
+
+```js
+let anyString = 'Mozilla'
+anyString.substring(4)     // 'lla'
+anyString.substring(0, 1)  // 'M'
+anyString.substring(1, 0)  // 'M'
+anyString.substring(0, 6)  // 'Mozill'
+anyString.substring(4, 7)  // 'lla'
+anyString.substring(7, 4)  // 'lla'
+anyString.substring(0, 7)  // 'Mozilla'
+anyString.substring(0, 10) // 'Mozilla'
+anyString.substring(5, 2)  // "zil"
+
+// Comparison with slice
+anyString.slice(5, 2)      // ""
+anyString.substring(-5, 2) // "Mo"
+anyString.substring(-5, -2)// ""
+anyString.slice(-5, 2)     // ""
+anyString.slice(-5, -2)    // "zil"
+```
+
+### startsWith()
+
+Determines whether a string begins with the characters of a specified string.
+
+**Syntax:** `startsWith(searchString, position = 0)`
+
+```js
+let str8 = 'To be, or not to be, that is the question.'
+str8.startsWith('To be')         // true
+str8.startsWith('not to be')     // false
+str8.startsWith('not to be', 10) // true
+```
+
+### endsWith()
+
+Determines whether a string ends with the characters of a specified string.
+
+**Syntax:** `endsWith(searchString, length = str.length)`
+
+```js
+let str9 = 'To be, or not to be, that is the question.'
+str9.endsWith('question.')  // true
+str9.endsWith('to be')      // false
+str9.endsWith('to be', 19)  // true
+```
+
+### toLowerCase()
+
+Returns the calling string value converted to lower case.
+
+**Syntax:** `toLowerCase()`
+
+```js
+'The quick brown fox jumps over the lazy dog.'.toLowerCase()  
+// "the quick brown fox jumps over the lazy dog."
+
+'ALPHABET'.toLowerCase() // 'alphabet'
+```
+
+### toUpperCase()
+
+Returns the calling string value converted to uppercase.
+
+**Syntax:** `toUpperCase()`
+
+```js
+'The quick brown fox jumps over the lazy dog.'.toUpperCase()  
+// "THE QUICK BROWN FOX JUMPS OVER THE LAZY DOG."
+
+'alphabet'.toUpperCase() // 'ALPHABET'
+```
+
+### toLocaleLowerCase()
+
+Returns the calling string value converted to lower case, according to locale-specific case mappings.
+
+**Syntax:** `toLocaleLowerCase(locale)` or `toLocaleLowerCase([locale1, locale2, ...])`
+
+```js
+'ALPHABET'.toLocaleLowerCase()              // 'alphabet'
+'\u0130'.toLocaleLowerCase('tr') === 'i'    // true
+'\u0130'.toLocaleLowerCase('en-US') === 'i' // false
+```
+
+### toLocaleUpperCase()
+
+Returns the calling string value converted to upper case, according to locale-specific case mappings.
+
+**Syntax:** `toLocaleUpperCase(locale)` or `toLocaleUpperCase([locale1, locale2, ...])`
+
+```js
+'istanbul'.toLocaleUpperCase('en-US') // "ISTANBUL"
+'alphabet'.toLocaleUpperCase()        // 'ALPHABET'
+'istanbul'.toLocaleUpperCase('tr-TR') // "İSTANBUL"
+```
+
+### trim()
+
+Removes whitespace from both ends of a string. Whitespace includes space, tab, no-break space, and line terminator characters.
+
+**Syntax:** `trim()`
+
+```js
+'   foo  '.trim() // "foo"
+'   foo  \n'.trim() // "foo"
+```
+
+### trimEnd() / trimRight()
+
+Removes whitespace from the end of a string. `trimRight()` is an alias of this method.
+
+**Syntax:** `trimEnd()`
+
+```js
+'   foo  '.trimEnd() // "   foo"
+'foo   \n'.trimEnd() // "foo"
+```
+
+### trimStart() / trimLeft()
+
+Removes whitespace from the beginning of a string. `trimLeft()` is an alias of this method.
+
+**Syntax:** `trimStart()`
+
+```js
+'   foo  '.trimStart()  // 'foo  '
+'\n   foo'.trimStart() // 'foo'
+```
+
+## String Comparison and Manipulation
+
+### at()
+
+Returns the character at the specified index, supporting negative indexing.
+
+**Syntax:** `at(index)`
+
+```js
+let str = 'Hello'
+str.at(0)   // 'H'
+str.at(-1)  // 'o'
+str.at(-2)  // 'l'
+str.at(10)  // undefined
+```
+
+### valueOf()
+
+Returns the primitive value of a String object.
+
+**Syntax:** `valueOf()`
+
+```js
+let strObj = new String('Hello')
+strObj.valueOf() // 'Hello'
+typeof strObj.valueOf() // 'string'
+```
+
+### toString()
+
+Returns a string representing the specified object.
+
+**Syntax:** `toString()`
+
+```js
+let strObj = new String('Hello')
+strObj.toString() // 'Hello'
+```
+
+## Best Practices
+
+### String Primitives vs String Objects
+
+- Prefer string primitives over String objects
+- String primitives are more performant
+- Use string literals instead of `new String()`
+
+```js
+// Good
+let str = "Hello"
+
+// Avoid
+let str = new String("Hello")
+```
+
+### Template Literals for Concatenation
+
+Template literals are more readable and performant than concatenation.
+
+```js
+// Good
+let greeting = `Hello, ${name}!`
+
+// Less preferred
+let greeting = 'Hello, ' + name + '!'
+```
+
+### Immutability
+
+Strings are immutable in JavaScript. All string methods return new strings rather than modifying the original.
+
+```js
+let original = "Hello"
+let modified = original.toUpperCase()
+console.log(original) // "Hello" (unchanged)
+console.log(modified) // "HELLO"
+```
+
+### Performance Considerations
+
+- Use `includes()` instead of `indexOf() !== -1` for readability
+- Use array-like notation `str[index]` instead of `charAt()` for modern code
+- For building long strings in loops, consider using arrays with `join()` or template literals
+
+```js
+// Good for multiple concatenations
+let parts = ['Hello', ' ', 'World']
+let result = parts.join('') // "Hello World"
+
+// Avoid in loops
+let result = ''
+for (let i = 0; i < 1000; i++) {
+  result += 'text' // Creates new string each iteration
+}
+```
