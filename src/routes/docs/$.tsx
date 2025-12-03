@@ -1,11 +1,9 @@
-import { useMemo } from 'react'
 import { DocsBody, DocsDescription, DocsPage, DocsTitle } from 'fumadocs-ui/layouts/docs/page'
 import { createFileRoute, notFound } from '@tanstack/react-router'
+import { useFumadocsLoader } from 'fumadocs-core/source/client'
 import browserCollections from 'fumadocs-mdx:collections/browser'
 import { createServerFn } from '@tanstack/react-start'
 import { DocsLayout } from 'fumadocs-ui/layouts/docs'
-
-import type * as PageTree from 'fumadocs-core/page-tree'
 
 import { baseOptions } from '@/lib/layout.shared'
 import { source } from '@/lib/source'
@@ -22,16 +20,14 @@ export const Route = createFileRoute('/docs/$')({
   },
 })
 
-const serverLoader = createServerFn({
-  method: 'GET',
-})
+const serverLoader = createServerFn({ method: 'GET' })
   .inputValidator((slugs: string[]) => slugs)
   .handler(async ({ data: slugs }) => {
     const page = source.getPage(slugs)
     if (!page) throw notFound()
 
     return {
-      tree: source.pageTree as object,
+      pageTree: await source.serializePageTree(source.getPageTree()),
       path: page.path,
     }
   })
@@ -55,47 +51,11 @@ const clientLoader = browserCollections.docs.createClientLoader({
 function Page() {
   const data = Route.useLoaderData()
   const Content = clientLoader.getComponent(data.path)
-  const tree = useMemo(
-    () => transformPageTree(data.tree as PageTree.Folder),
-    [data.tree],
-  )
+  const { pageTree } = useFumadocsLoader(data)
 
   return (
-    <DocsLayout {...baseOptions()} tree={tree}>
+    <DocsLayout {...baseOptions()} tree={pageTree}>
       <Content />
     </DocsLayout>
   )
-}
-
-function transformPageTree(root: PageTree.Root): PageTree.Root {
-  function mapNode<T extends PageTree.Node>(item: T): T {
-    if (typeof item.icon === 'string') {
-      item = {
-        ...item,
-        icon: (
-          <span
-            dangerouslySetInnerHTML={{
-              __html: item.icon,
-            }}
-          />
-        ),
-      }
-    }
-
-    if (item.type === 'folder') {
-      return {
-        ...item,
-        index: item.index ? mapNode(item.index) : undefined,
-        children: item.children.map(mapNode),
-      }
-    }
-
-    return item
-  }
-
-  return {
-    ...root,
-    children: root.children.map(mapNode),
-    fallback: root.fallback ? transformPageTree(root.fallback) : undefined,
-  }
 }
