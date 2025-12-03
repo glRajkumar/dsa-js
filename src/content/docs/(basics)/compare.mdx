@@ -1,0 +1,72 @@
+---
+title: Comparison
+description: A comprehensive guide to understanding javaScript collections.
+---
+
+## Comparison Table
+
+| Feature | Object | Array | Map | Set | WeakMap | WeakSet |
+|---------|--------|-------|-----|-----|---------|---------| 
+| Key Type | String/Symbol | Index (number) | Any | Any (unique) | Object | Object |
+| Iterable | ✅ Yes (for...in) | ✅ Yes | ✅ Yes | ✅ Yes | ❌ No | ❌ No |
+| Size Property | ❌ No (use Object.keys) | ✅ Yes (length) | ✅ Yes | ✅ Yes | ❌ No | ❌ No |
+| Garbage Collection | Normal | Normal | Normal | Normal | Weak references | Weak references |
+| Order Preservation | ❌ No (mostly) | ✅ Yes | ✅ Yes (insertion) | ✅ Yes (insertion) | ❌ No | ❌ No |
+| Use Case | General objects, structured data | Ordered lists, sequences | General key-value storage | Unique value storage | Private data, caching | Object tracking |
+| Clear Method | ❌ No | ✅ Yes (length=0) | ✅ Yes | ✅ Yes | ❌ No | ❌ No |
+| JSON Serializable | ✅ Yes | ✅ Yes | ❌ No | ❌ No | ❌ No | ❌ No |
+| Key Equality | String coercion | Index-based | SameValueZero | SameValueZero | Reference equality | Reference equality |
+
+
+## Performance Considerations
+
+### Object vs Map
+
+- **Objects** are faster for small, static key sets with string keys
+- **Maps** are optimized for frequent additions and removals
+- **Maps** perform better with non-string keys
+- **Maps** have better worst-case performance for large datasets
+- Use **Objects** when keys are known at development time
+- Use **Maps** when keys are determined at runtime
+
+### Array Performance
+
+- **Access**: O(1) for index access
+- **Search**: O(n) for indexOf/includes
+- **Insertion/Deletion**: O(n) at beginning/middle, O(1) at end
+- **Iteration**: Generally fast, use appropriate method for task
+- **Sorting**: O(n log n) time complexity
+- Use **Set** for fast uniqueness checks instead of `array.includes()`
+
+### Set Performance
+
+- **Add/Delete/Has**: O(1) average time complexity
+- **Iteration**: O(n) but very efficient
+- Provides O(1) lookup time for checking if a value exists
+- Ideal for uniqueness checks and de-duplication
+- Much faster than `Array.prototype.includes()` for large datasets
+
+### WeakMap/WeakSet Performance
+
+- Slightly slower than Map/Set due to weak reference handling
+- Best for scenarios requiring automatic memory management
+- Prevent memory leaks in long-running applications
+- No iteration means no performance cost for enumeration
+- Trade-off: Less functionality for better memory management
+
+## Memory Management
+
+### Strong References (Object, Array, Map, Set)
+
+- References prevent garbage collection
+- Objects remain in memory as long as references exist
+- Can lead to memory leaks if not managed carefully
+- Use when you need full control over object lifecycle
+
+### Weak References (WeakMap, WeakSet)
+
+- Don't prevent garbage collection of keys/values
+- Automatically cleaned up when objects are no longer referenced
+- Cannot be iterated (size is unknowable)
+- Ideal for caches, metadata, and private data
+- Prevent memory leaks in long-running applications

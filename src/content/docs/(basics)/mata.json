@@ -1,8 +1,6 @@
 {
   "title": "Basics",
   "description": "Basics of Javascript",
-  "icon": "Code",
-  "root": true,
   "pages": [
     "types",
     "string",
@@ -11,6 +9,7 @@
     "map",
     "set",
     "weak map",
-    "weak set"
+    "weak set",
+    "comparison"
   ]
 }
