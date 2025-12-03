@@ -1,0 +1,100 @@
+---
+title: Operator
+description: A comprehensive guide to understanding operator in JavaScript and how to work with them.
+---
+
+## Logical
+
+```js
+// AND (&&)
+true && true  // true
+true && false // false
+false && true // false
+
+// OR (||)
+true || false  // true
+false || false // false
+true || true   // true
+
+// NOT (!)
+!true  // false
+!false // true
+!!true // true (double negation)
+
+// Short-circuit evaluation
+let result1 = false && expensiveFunction() // expensiveFunction() not called
+let result2 = true || expensiveFunction()  // expensiveFunction() not called
+
+// Returning non-boolean values
+"hello" && "world" // "world"
+"" && "world"      // ""
+"hello" || "world" // "hello"
+"" || "world"      // "world"
+```
+
+## Ternary
+
+```js
+// condition ? valueIfTrue : valueIfFalse
+let age = 18;
+let canVote = age >= 18 ? "Yes" : "No" // "Yes"
+
+// Nested ternary
+let score = 85;
+let grade = score >= 90 ? "A" : score >= 80 ? "B" : score >= 70 ? "C" : "F";
+```
+
+
+## Nullish Coalescing (??)
+
+```js
+// Returns right side only if left is null or undefined
+let value1 = null ?? "default"       // "default"
+let value2 = undefined ?? "default"  // "default"
+let value3 = 0 ?? "default"          // 0
+let value4 = "" ?? "default"         // ""
+let value5 = false ?? "default"      // false
+
+// Compare with ||
+0 || "default" // "default"
+0 ?? "default" // 0
+```
+
+## Comparison
+
+```js
+// Equality
+5 == "5"  // true (loose equality)
+5 === "5" // false (strict equality)
+5 != "5"  // false
+5 !== "5" // true
+
+// Relational
+5 > 3  // true
+5 < 3  // false
+5 >= 5 // true
+5 <= 4 // false
+
+// String comparison
+"apple" < "banana" // true (lexicographic)
+"Apple" < "banana" // true (uppercase < lowercase in ASCII)
+```
+
+## Optional Chaining with Booleans
+
+```js
+const user = {
+  profile: {
+    settings: {
+      notifications: true
+    }
+  }
+};
+
+// Safe property access
+let notifications = user?.profile?.settings?.notifications // true
+let theme = user?.profile?.settings?.theme // undefined
+
+// With boolean default
+let darkMode = user?.profile?.settings?.darkMode ?? false // false
+```

@@ -1,0 +1,120 @@
+---
+title: Booleans
+description: A comprehensive guide to understanding booleans in JavaScript and how to work with them.
+---
+
+## Introduction
+
+Booleans represent logical values: `true` or `false`.
+
+### Creating Booleans
+
+```js
+// Boolean literals
+let isActive = true;
+let isComplete = false;
+
+// Boolean constructor (not recommended)
+let bool1 = new Boolean(true); // Boolean object
+let bool2 = Boolean(true); // boolean primitive
+
+// Type checking
+typeof true; // "boolean"
+typeof new Boolean(true); // "object"
+```
+
+### Boolean Conversion
+
+```js
+// Using Boolean() function
+Boolean(1); // true
+Boolean(0); // false
+Boolean("hello"); // true
+Boolean(""); // false
+Boolean(null); // false
+Boolean(undefined); // false
+Boolean(NaN); // false
+Boolean([]); // true
+Boolean({}); // true
+
+// Using double negation
+!!"hello"; // true
+!!0; // false
+```
+
+### Falsy Values
+
+JavaScript has exactly 6 falsy values:
+
+```js
+Boolean(false); // false
+Boolean(0); // false
+Boolean(-0); // false
+Boolean(""); // false
+Boolean(null); // false
+Boolean(undefined); // false
+Boolean(NaN); // false
+```
+
+### Truthy Values
+
+All values are truthy except the falsy values above:
+
+```js
+Boolean(true); // true
+Boolean(1); // true
+Boolean(-1); // true
+Boolean("hello"); // true
+Boolean(" "); // true (space is truthy)
+Boolean([]); // true
+Boolean({}); // true
+Boolean(function() {}); // true
+```
+
+### Boolean Methods
+
+```js
+// toString()
+true.toString(); // "true"
+false.toString(); // "false"
+
+// valueOf()
+let boolObj = new Boolean(true);
+boolObj.valueOf(); // true
+```
+
+### Practical Boolean Patterns
+
+```js
+// Feature flags
+const features = {
+  darkMode: true,
+  betaFeatures: false
+};
+
+// Toggle boolean
+let isOpen = false;
+isOpen = !isOpen; // true
+
+// Multiple conditions
+let isValid = username && password && age >= 18;
+
+// Guard clauses
+function processUser(user) {
+  if (!user) return;
+  if (!user.isActive) return;
+  // Process user...
+}
+
+// Default values
+function greet(name) {
+  name = name || "Guest";
+  console.log(`Hello, ${name}`);
+}
+
+// Modern default with nullish coalescing
+function greet2(name) {
+  name = name ?? "Guest";
+  console.log(`Hello, ${name}`);
+}
+```
