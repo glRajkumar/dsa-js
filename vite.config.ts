@@ -10,6 +10,9 @@ import mdx from 'fumadocs-mdx/vite';
 import * as MdxConfig from './source.config';
 
 const config = defineConfig({
+  optimizeDeps: {
+    include: ["hast-util-to-jsx-runtime"],
+  },
   plugins: [
     devtools(),
     mdx(MdxConfig),

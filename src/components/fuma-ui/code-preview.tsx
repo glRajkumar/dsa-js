@@ -1,11 +1,10 @@
 import { Suspense, use } from 'react'
 import { CodeBlockTab, CodeBlockTabs, CodeBlockTabsList, CodeBlockTabsTrigger } from 'fumadocs-ui/components/codeblock'
+import { DynamicCodeBlock } from 'fumadocs-ui/components/dynamic-codeblock'
 import { createServerFn } from '@tanstack/react-start'
 import types from 'typescript'
 import path from 'path'
 import fs from 'fs'
-
-import { CodeBlock } from './code-block-extended'
 
 const getContent = createServerFn({ method: 'GET' })
   .inputValidator((filePath: string) => filePath)
@@ -42,18 +41,38 @@ export function Inner({ promise }: { promise: Promise<string> }) {
       </CodeBlockTabsList>
 
       <CodeBlockTab value="Javascript">
-        <Suspense fallback={"Loading..."}>
-          <CodeBlock lang='jsx'>
-            {jsCode}
-          </CodeBlock>
-        </Suspense>
+        <DynamicCodeBlock
+          lang='jsx'
+          code={jsCode}
+          wrapInSuspense
+          codeblock={{
+            className: "bg-(--shiki-light-bg) dark:bg-(--shiki-dark-bg)"
+          }}
+          options={{
+            themes: {
+              light: 'github-light',
+              dark: 'github-dark',
+            }
+          }}
+        />
       </CodeBlockTab>
 
       <CodeBlockTab value="Typescript">
         <Suspense fallback={"Loading..."}>
-          <CodeBlock lang='tsx'>
-            {tsCode}
-          </CodeBlock>
+          <DynamicCodeBlock
+            lang='tsx'
+            code={tsCode}
+            wrapInSuspense
+            codeblock={{
+              className: "bg-(--shiki-light-bg) dark:bg-(--shiki-dark-bg)"
+            }}
+            options={{
+              themes: {
+                light: 'github-light',
+                dark: 'github-dark',
+              }
+            }}
+          />
         </Suspense>
       </CodeBlockTab>
     </CodeBlockTabs>
