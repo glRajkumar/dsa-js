@@ -61,4 +61,64 @@ function TabsContent({
   )
 }
 
-export { Tabs, TabsList, TabsTrigger, TabsContent }
+type tabItemT = {
+  value: string
+  trigger: React.ReactNode
+  content: React.ReactNode
+  disabled?: boolean
+  triggerCls?: string
+  contentCls?: string
+}
+
+type tabItemsT = tabItemT[]
+type tabsWrapperProps = {
+  tabs: tabItemsT
+  listCls?: string
+  triggerCls?: string
+  contentCls?: string
+}
+
+function TabsWrapper({
+  tabs,
+  listCls,
+  triggerCls,
+  contentCls,
+  ...props
+}: React.ComponentProps<typeof TabsPrimitive.Root> & tabsWrapperProps) {
+  return (
+    <Tabs {...props}>
+      <TabsList className={listCls}>
+        {tabs.map(tab => (
+          <TabsTrigger
+            key={tab.value}
+            value={tab.value}
+            disabled={tab.disabled}
+            className={cn(triggerCls, tab.triggerCls)}
+          >
+            {tab.trigger}
+          </TabsTrigger>
+        ))}
+      </TabsList>
+
+      {tabs.map(tab => (
+        <TabsContent
+          key={tab.value}
+          value={tab.value}
+          className={cn(contentCls, tab.contentCls)}
+        >
+          {tab.content}
+        </TabsContent>
+      ))}
+    </Tabs>
+  )
+}
+
+export {
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  TabsContent,
+  TabsWrapper,
+  type tabItemT,
+  type tabItemsT,
+}
