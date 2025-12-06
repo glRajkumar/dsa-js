@@ -21,9 +21,11 @@ const ArrayConstraintZ = z.object({
 })
 
 const ParamZ = z.object({
+  type: z.literal("param"),
   name: z.string(),
-  type: z.enum(["number", "string", "boolean", "array", "object"]),
+  pType: z.enum(["number", "string", "boolean", "array", "object"]).default("string").optional(),
   constraints: z.union([NumberConstraintZ, StringConstraintZ, ArrayConstraintZ]).optional(),
+  description: z.string().optional(),
 })
 
 const FunctionMetadataZ = z.object({
@@ -31,6 +33,7 @@ const FunctionMetadataZ = z.object({
   name: z.string(),
   params: z.array(ParamZ).optional(),
   isAsync: z.boolean().optional(),
+  description: z.string().optional(),
 })
 
 const ClassMetadataZ = z.object({
@@ -38,9 +41,11 @@ const ClassMetadataZ = z.object({
   name: z.string(),
   constructor: z.object({ params: z.array(ParamZ).optional() }).optional(),
   methods: z.array(FunctionMetadataZ).optional(),
+  description: z.string().optional(),
 })
 
-export const FileMetadataZ = z.array(z.union([FunctionMetadataZ, ClassMetadataZ]))
+export const FnOrClsArrZ = z.array(z.union([FunctionMetadataZ, ClassMetadataZ]))
+export const jsonMetaDataZ = z.record(z.string(), z.union([FunctionMetadataZ, ClassMetadataZ]))
 
 export type NumberConstraintT = z.infer<typeof NumberConstraintZ>
 export type StringConstraintT = z.infer<typeof StringConstraintZ>
@@ -48,4 +53,8 @@ export type ArrayConstraintT = z.infer<typeof ArrayConstraintZ>
 export type ParamT = z.infer<typeof ParamZ>
 export type FunctionMetadataT = z.infer<typeof FunctionMetadataZ>
 export type ClassMetadataT = z.infer<typeof ClassMetadataZ>
-export type FileMetadataT = z.infer<typeof FileMetadataZ>
+export type FnOrClsArrT = z.infer<typeof FnOrClsArrZ>
+export type jsonMetaDataT = z.infer<typeof jsonMetaDataZ>
+
+export type fnT = FunctionMetadataT & { compiledFn: Function }
+export type clsT = ClassMetadataT & { compiledFCls: any }

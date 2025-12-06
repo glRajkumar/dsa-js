@@ -1,7 +1,7 @@
 import * as fs from "fs"
 import ts from "typescript"
 
-import type { FileMetadataT, ParamT } from "./schema"
+import type { FnOrClsArrT, ParamT } from "./schema"
 
 function extractParameters(parameters: ts.NodeArray<ts.ParameterDeclaration>): ParamT[] {
   return parameters
@@ -26,17 +26,18 @@ function extractParameters(parameters: ts.NodeArray<ts.ParameterDeclaration>): P
       }
 
       return {
-        type,
+        type: "param",
+        pType: type,
         name: param.name?.getText() || "",
       } as ParamT
     })
 }
 
-export function extractMetadataFromFile(filePath: string): FileMetadataT {
+export function extractMetadataFromFile(filePath: string): FnOrClsArrT {
   const sourceCode = fs.readFileSync(filePath, "utf-8")
   const sourceFile = ts.createSourceFile(filePath, sourceCode, ts.ScriptTarget.Latest, true)
 
-  const items: FileMetadataT = []
+  const items: FnOrClsArrT = []
 
   function visit(node: ts.Node) {
     if (

@@ -15,7 +15,7 @@ function Inner({ promise }: { promise: ReturnType<typeof getProblemsContent> }) 
       />
 
       <CodePreviewUI
-        jsCode={data.tsCode}
+        jsCode={data.jsCode}
         tsCode={data.tsCode}
       />
     </>
