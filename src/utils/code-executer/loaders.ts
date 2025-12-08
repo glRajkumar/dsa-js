@@ -4,20 +4,17 @@ import * as path from "path"
 
 function mergeParams(params: paramT[] = [], newParams: paramT[] = []): paramT[] {
   return params.map((oldParam) => {
-    const updated = newParams.find((p) => p.name === oldParam.name)
+    const updated = newParams.find((p) => p.name === oldParam.name && p.type === oldParam.type)
+    if (!updated) return oldParam
 
-    if (updated) {
-      return {
-        ...oldParam,
-        ...updated,
-        constraints: {
-          ...oldParam.constraints,
-          ...updated.constraints,
-        },
-      }
-    }
-
-    return oldParam
+    return {
+      ...oldParam,
+      ...updated,
+      constraints: {
+        ...oldParam.constraints,
+        ...updated.constraints,
+      },
+    } as paramT
   })
 }
 
@@ -39,7 +36,7 @@ export async function loadMetadata(filePath: string): rt {
   const staticMeta = metaBase.meta ?? {}
 
   for (const item of metadata) {
-    if (item.type === "funtion") {
+    if (item.type === "function") {
       const staticItem = staticMeta[item.name] as functionMetadataT
 
       executers.push({

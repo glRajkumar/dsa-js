@@ -26,8 +26,7 @@ function extractParameters(parameters: ts.NodeArray<ts.ParameterDeclaration>): p
       }
 
       return {
-        type: "param",
-        pType: type,
+        type,
         name: param.name?.getText() || "",
       } as paramT
     })
@@ -47,7 +46,7 @@ export function extractMetadataFromFile(filePath: string): fnOrClsArrT {
     ) {
       const params = extractParameters(node.parameters)
       items.push({
-        type: "funtion",
+        type: "function",
         name: node.name.text,
         params,
         isAsync: node.modifiers?.some((m) => m.kind === ts.SyntaxKind.AsyncKeyword) ?? false,
@@ -69,7 +68,7 @@ export function extractMetadataFromFile(filePath: string): fnOrClsArrT {
         name: node.name.text,
         construct: constructor ? extractParameters(constructor.parameters) : [],
         methods: (methods as ts.MethodDeclaration[]).map((method) => ({
-          type: "funtion",
+          type: "function",
           name: method.name?.getText(sourceFile) || "",
           params: extractParameters(method.parameters),
           isAsync: method.modifiers?.some((m) => m.kind === ts.SyntaxKind.AsyncKeyword) ?? false,

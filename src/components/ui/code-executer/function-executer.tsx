@@ -66,10 +66,10 @@ export function FunctionExecuter({ name, params, description, isAsync, prefix = 
                 key={param.name}
                 name={param.name}
                 label={param.name}
-                type={param.pType}
+                type={param.type}
                 value={values[param.name]}
                 onChange={e => {
-                  const val = param.pType === "number" ? e.target.valueAsNumber : e.target.value
+                  const val = param.type === "number" ? e.target.valueAsNumber : e.target.value
                   onChange(param.name, val)
                 }}
               />

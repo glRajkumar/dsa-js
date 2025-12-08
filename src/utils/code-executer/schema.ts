@@ -7,12 +7,19 @@ export const PrimitiveZ = z.union([
   z.null(),
   z.undefined(),
 ])
+export type primitiveT = z.infer<typeof PrimitiveZ>
+export type primOrArrOrObjT = primitiveT | primArrT | primObjT
 
-export const PrimOrArrOrObjZ = z.union([
+type primArrT = Array<primOrArrOrObjT>
+type primObjT = {
+  [key: string]: primOrArrOrObjT
+}
+
+export const PrimOrArrOrObjZ: z.ZodType<primOrArrOrObjT> = z.lazy(() => z.union([
   PrimitiveZ,
-  z.array(PrimitiveZ),
-  z.record(z.string(), PrimitiveZ),
-])
+  z.array(PrimOrArrOrObjZ),
+  z.record(z.string(), PrimOrArrOrObjZ),
+]))
 
 export const NumberConstraintZ = z.object({
   min: z.number().optional(),
@@ -32,49 +39,134 @@ export const BooleanConstraintZ = z.object({
   defaultValue: z.boolean().optional(),
 })
 
-export const ArrayConstraintZ = z.object({
+export type numberConstraintT = z.infer<typeof NumberConstraintZ>
+export type stringConstraintT = z.infer<typeof StringConstraintZ>
+export type booleanConstraintT = z.infer<typeof BooleanConstraintZ>
+
+export type arrayConstraintT = {
+  min?: number
+  max?: number
+  canIncludeFalsy?: boolean
+} & (
+    | { type: "string"; constraint?: stringConstraintT; defaultValue?: string[] }
+    | { type: "number"; constraint?: numberConstraintT; defaultValue?: number[] }
+    | { type: "boolean"; constraint?: booleanConstraintT; defaultValue?: boolean[] }
+    | { type: "array"; constraint?: arrayConstraintT; defaultValue?: primOrArrOrObjT[] }
+    | { type: "object"; constraint?: Record<string, objectConstraintT>; defaultValue?: Record<string, primOrArrOrObjT>[] }
+  )
+
+export type objectConstraintT =
+  | { type: "string"; constraint?: stringConstraintT; defaultValue?: Record<string, string> }
+  | { type: "number"; constraint?: numberConstraintT; defaultValue?: Record<string, number> }
+  | { type: "boolean"; constraint?: booleanConstraintT; defaultValue?: Record<string, boolean> }
+  | { type: "array"; constraint?: arrayConstraintT; defaultValue?: Record<string, primOrArrOrObjT[]> }
+  | { type: "object"; constraint?: Record<string, objectConstraintT>; defaultValue?: Record<string, primOrArrOrObjT> }
+
+const CommonArrayConstraintZ = z.object({
   min: z.number().optional(),
   max: z.number().optional(),
-  type: z.enum(["string", "number", "boolean"]).optional(),
-  defaultValue: z.array(PrimOrArrOrObjZ).optional(),
+  canIncludeFalsy: z.boolean().optional(),
 })
 
-export const ObjectConstraintZ = z.object({
-  defaultValue: z.record(z.string(), PrimOrArrOrObjZ).optional(),
-})
+export const ArrayConstraintZ: z.ZodType<arrayConstraintT> = z.discriminatedUnion("type", [
+  CommonArrayConstraintZ.extend({
+    type: z.literal("string"),
+    constraint: StringConstraintZ.optional(),
+    defaultValue: z.array(z.string()).optional(),
+  }),
+
+  CommonArrayConstraintZ.extend({
+    type: z.literal("number"),
+    constraint: NumberConstraintZ.optional(),
+    defaultValue: z.array(z.number()).optional(),
+  }),
+
+  CommonArrayConstraintZ.extend({
+    type: z.literal("boolean"),
+    constraint: BooleanConstraintZ.optional(),
+    defaultValue: z.array(z.boolean()).optional(),
+  }),
+
+  z.lazy(() =>
+    CommonArrayConstraintZ.extend({
+      type: z.literal("array"),
+      constraint: z.lazy(() => ArrayConstraintZ).optional(),
+      defaultValue: z.array(PrimOrArrOrObjZ).optional(),
+    })
+  ),
+
+  z.lazy(() =>
+    CommonArrayConstraintZ.extend({
+      type: z.literal("object"),
+      constraint: z.record(z.string(), z.lazy(() => ObjectConstraintZ)).optional(),
+      defaultValue: z.array(z.record(z.string(), PrimOrArrOrObjZ)).optional(),
+    })
+  )
+])
+
+export const ObjectConstraintZ: z.ZodType<objectConstraintT> = z.discriminatedUnion("type", [
+  z.object({
+    type: z.literal("string"),
+    constraint: StringConstraintZ.optional(),
+    defaultValue: z.record(z.string(), z.string()).optional(),
+  }),
+
+  z.object({
+    type: z.literal("number"),
+    constraint: NumberConstraintZ.optional(),
+    defaultValue: z.record(z.string(), z.number()).optional(),
+  }),
+
+  z.object({
+    type: z.literal("boolean"),
+    constraint: BooleanConstraintZ.optional(),
+    defaultValue: z.record(z.string(), z.boolean()).optional(),
+  }),
+
+  z.lazy(() => z.object({
+    type: z.literal("array"),
+    constraint: z.lazy(() => ArrayConstraintZ).optional(),
+    defaultValue: z.record(z.string(), z.array(PrimOrArrOrObjZ)).optional(),
+  })),
+
+  z.lazy(() => z.object({
+    type: z.literal("object"),
+    constraint: z.record(z.string(), z.lazy(() => ObjectConstraintZ)).optional(),
+    defaultValue: z.record(z.string(), PrimOrArrOrObjZ).optional(),
+  }))
+])
 
 const CommonParamZ = z.object({
-  type: z.literal("param"),
   name: z.string(),
   required: z.boolean().optional(),
   description: z.string().optional(),
 })
 
-export const ParamZ = z.discriminatedUnion("pType", [
+export const ParamZ = z.discriminatedUnion("type", [
   CommonParamZ.extend({
-    pType: z.literal("string"),
+    type: z.literal("string"),
     constraints: StringConstraintZ.optional(),
   }),
   CommonParamZ.extend({
-    pType: z.literal("number"),
+    type: z.literal("number"),
     constraints: NumberConstraintZ.optional(),
   }),
   CommonParamZ.extend({
-    pType: z.literal("boolean"),
+    type: z.literal("boolean"),
     constraints: BooleanConstraintZ.optional(),
   }),
   CommonParamZ.extend({
-    pType: z.literal("array"),
+    type: z.literal("array"),
     constraints: ArrayConstraintZ.optional(),
   }),
   CommonParamZ.extend({
-    pType: z.literal("object"),
+    type: z.literal("object"),
     constraints: ObjectConstraintZ.optional(),
   }),
 ])
 
 export const FunctionMetadataZ = z.object({
-  type: z.literal("funtion"),
+  type: z.literal("function"),
   name: z.string(),
   params: z.array(ParamZ).optional(),
   isAsync: z.boolean().optional(),
@@ -94,7 +186,8 @@ export const TestCaseZ = z.object({
   output: PrimOrArrOrObjZ,
 })
 
-export const MetaZ = z.record(z.string(),
+export const MetaZ = z.record(
+  z.string(),
   z.union([FunctionMetadataZ, ClassMetadataZ])
 )
 
@@ -114,9 +207,6 @@ export const FnOrClsArrZ = z.array(
   z.union([FunctionMetadataZ, ClassMetadataZ])
 )
 
-export type numberConstraintT = z.infer<typeof NumberConstraintZ>
-export type stringConstraintT = z.infer<typeof StringConstraintZ>
-export type arrayConstraintT = z.infer<typeof ArrayConstraintZ>
 export type paramT = z.infer<typeof ParamZ>
 export type functionMetadataT = z.infer<typeof FunctionMetadataZ>
 export type classMetadataT = z.infer<typeof ClassMetadataZ>

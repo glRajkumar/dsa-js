@@ -17,11 +17,11 @@ export const metadata: jsonMetaDataT = {
   ],
   meta: {
     p1_1: {
-      type: "funtion",
+      type: "function",
       name: "p1_1",
       params: [{
-        type: "param",
         name: "n",
+        type: "number",
         constraints: {
           min: 10,
           max: 11,

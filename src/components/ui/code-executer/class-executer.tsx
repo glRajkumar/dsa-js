@@ -30,7 +30,7 @@ export function ClassExecuter({ name, construct, methods, description, filePath 
       {
         construct &&
         <FunctionExecuter
-          type="funtion"
+          type="function"
           name="Constructor"
           params={construct}
           prefix=""

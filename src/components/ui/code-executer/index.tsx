@@ -10,7 +10,7 @@ export function CodeExecuter({ filePath, executers }: props) {
     <div>
       {
         executers.map(ex => {
-          if (ex.type === "funtion") {
+          if (ex.type === "function") {
             return <FunctionExecuterWrapper key={ex.name} filePath={filePath} {...ex} />
           }
           return <ClassExecuter key={ex.name} filePath={filePath} {...ex} />
