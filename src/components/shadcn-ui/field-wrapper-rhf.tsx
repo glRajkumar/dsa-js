@@ -19,6 +19,7 @@ type BaseProps<T extends FieldValues> = {
   name: Path<T>
   control: Control<T>
   className?: string
+  description?: React.ReactNode
   label?: React.ReactNode
 }
 

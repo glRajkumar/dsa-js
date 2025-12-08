@@ -6,8 +6,8 @@ import { cn, getKey, getLabel, getValue, parseAllowedPrimitive } from '@/lib/uti
 
 import { type comboboxProps, type multiSelectComboboxProps, Combobox, MultiSelectCombobox } from './combobox'
 import { type selectProps, SelectWrapper as SelectPrimitiveWrapper } from './select'
+import { Field, FieldLabel, FieldError, FieldDescription } from './field'
 import { Popover, PopoverContent, PopoverTrigger } from './popover'
-import { Field, FieldLabel, FieldError } from './field'
 import { RadioGroup, RadioGroupItem } from './radio-group'
 import { Calendar } from './calendar'
 import { Textarea } from './textarea'
@@ -19,13 +19,14 @@ import { Input } from './input'
 type BaseProps = {
   name: string
   label?: React.ReactNode
+  description?: React.ReactNode
   error?: { message?: string }
   invalid?: boolean
   className?: string
 }
 
 type InputProps = BaseProps & React.InputHTMLAttributes<HTMLInputElement>
-export function InputWrapper({ name, label, error, invalid, className, type = 'text', placeholder, ...props }: InputProps) {
+export function InputWrapper({ name, label, error, invalid, className, type = 'text', placeholder, description, ...props }: InputProps) {
   const isInvalid = invalid || !!error
 
   return (
@@ -39,13 +40,15 @@ export function InputWrapper({ name, label, error, invalid, className, type = 't
         aria-invalid={isInvalid}
         {...props}
       />
+
+      {description && <FieldDescription>{description}</FieldDescription>}
       {isInvalid && <FieldError errors={[error]} />}
     </Field>
   )
 }
 
 type TextareaProps = BaseProps & React.TextareaHTMLAttributes<HTMLTextAreaElement>
-export function TextareaWrapper({ name, label, error, invalid, className, placeholder, ...rest }: TextareaProps) {
+export function TextareaWrapper({ name, label, error, invalid, className, placeholder, description, ...rest }: TextareaProps) {
   const isInvalid = invalid || !!error
 
   return (
@@ -58,6 +61,7 @@ export function TextareaWrapper({ name, label, error, invalid, className, placeh
         aria-invalid={isInvalid}
         {...rest}
       />
+      {description && <FieldDescription>{description}</FieldDescription>}
       {isInvalid && <FieldError errors={[error]} />}
     </Field>
   )
@@ -68,7 +72,7 @@ type RadioProps = BaseProps & {
   value?: allowedPrimitiveT
   onValueChange?: (value: allowedPrimitiveT) => void
 }
-export function RadioWrapper({ name, label, error, invalid, className, options, value, onValueChange }: RadioProps) {
+export function RadioWrapper({ name, label, error, invalid, className, options, value, description, onValueChange }: RadioProps) {
   const isInvalid = invalid || !!error
 
   return (
@@ -89,6 +93,7 @@ export function RadioWrapper({ name, label, error, invalid, className, options, 
           </div>
         ))}
       </RadioGroup>
+      {description && <FieldDescription>{description}</FieldDescription>}
       {isInvalid && <FieldError errors={[error]} />}
     </Field>
   )
@@ -99,7 +104,7 @@ type CheckboxProps = BaseProps & {
   value?: allowedPrimitiveT[]
   onValueChange?: (value: allowedPrimitiveT[]) => void
 }
-export function CheckboxWrapper({ name, label, error, invalid, className, options, value = [], onValueChange }: CheckboxProps) {
+export function CheckboxWrapper({ name, label, error, invalid, className, options, value = [], description, onValueChange }: CheckboxProps) {
   const isInvalid = invalid || !!error
 
   const toggleValue = (v: allowedPrimitiveT) => {
@@ -133,6 +138,7 @@ export function CheckboxWrapper({ name, label, error, invalid, className, option
           )
         })}
       </div>
+      {description && <FieldDescription>{description}</FieldDescription>}
       {isInvalid && <FieldError errors={[error]} />}
     </Field>
   )
@@ -142,7 +148,7 @@ type SwitchProps = BaseProps & {
   checked?: boolean
   onCheckedChange?: (checked: boolean) => void
 }
-export function SwitchWrapper({ name, label, error, invalid, className, checked, onCheckedChange }: SwitchProps) {
+export function SwitchWrapper({ name, label, error, invalid, className, checked, description, onCheckedChange }: SwitchProps) {
   const isInvalid = invalid || !!error
 
   return (
@@ -157,6 +163,7 @@ export function SwitchWrapper({ name, label, error, invalid, className, checked,
           aria-invalid={isInvalid}
         />
       </div>
+      {description && <FieldDescription>{description}</FieldDescription>}
       {isInvalid && <FieldError errors={[error]} />}
     </Field>
   )
@@ -166,7 +173,7 @@ type SelectProps = BaseProps & Omit<selectProps, 'value' | 'onValueChange'> & {
   value?: allowedPrimitiveT
   onValueChange?: (value: allowedPrimitiveT) => void
 }
-export function SelectWrapper({ name, label, error, invalid, className, options, placeholder, value, onValueChange, ...props }: SelectProps) {
+export function SelectWrapper({ name, label, error, invalid, className, options, placeholder, value, description, onValueChange, ...props }: SelectProps) {
   const isInvalid = invalid || !!error
 
   return (
@@ -181,6 +188,7 @@ export function SelectWrapper({ name, label, error, invalid, className, options,
         onValueChange={(val) => onValueChange?.(parseAllowedPrimitive(val))}
         aria-invalid={isInvalid}
       />
+      {description && <FieldDescription>{description}</FieldDescription>}
       {isInvalid && <FieldError errors={[error]} />}
     </Field>
   )
@@ -190,7 +198,7 @@ type DatePickerProps = BaseProps & Omit<React.ComponentProps<typeof Calendar>, '
   value?: Date
   onSelect?: (date: Date | undefined) => void
 }
-export function DatePickerWrapper({ name, label, error, invalid, className, value, onSelect, ...calendarProps }: DatePickerProps) {
+export function DatePickerWrapper({ name, label, error, invalid, className, value, onSelect, description, ...calendarProps }: DatePickerProps) {
   const [open, setOpen] = useState(false)
   const isInvalid = invalid || !!error
 
@@ -224,13 +232,14 @@ export function DatePickerWrapper({ name, label, error, invalid, className, valu
           />
         </PopoverContent>
       </Popover>
+      {description && <FieldDescription>{description}</FieldDescription>}
       {isInvalid && <FieldError errors={[error]} />}
     </Field>
   )
 }
 
 type ComboboxProps = BaseProps & comboboxProps
-export function ComboboxWrapper({ name, label, error, invalid, className, placeholder, value, onValueChange, ...rest }: ComboboxProps) {
+export function ComboboxWrapper({ name, label, error, invalid, className, placeholder, value, description, onValueChange, ...rest }: ComboboxProps) {
   const isInvalid = invalid || !!error
 
   return (
@@ -244,13 +253,14 @@ export function ComboboxWrapper({ name, label, error, invalid, className, placeh
         onValueChange={onValueChange}
         aria-invalid={isInvalid}
       />
+      {description && <FieldDescription>{description}</FieldDescription>}
       {isInvalid && <FieldError errors={[error]} />}
     </Field>
   )
 }
 
 type MultiSelectComboboxProps = BaseProps & multiSelectComboboxProps
-export function MultiSelectComboboxWrapper({ name, label, error, invalid, className, placeholder, value, onValueChange, ...rest }: MultiSelectComboboxProps) {
+export function MultiSelectComboboxWrapper({ name, label, error, invalid, className, placeholder, value, description, onValueChange, ...rest }: MultiSelectComboboxProps) {
   const isInvalid = invalid || !!error
 
   return (
@@ -264,6 +274,7 @@ export function MultiSelectComboboxWrapper({ name, label, error, invalid, classN
         onValueChange={onValueChange}
         aria-invalid={isInvalid}
       />
+      {description && <FieldDescription>{description}</FieldDescription>}
       {isInvalid && <FieldError errors={[error]} />}
     </Field>
   )
