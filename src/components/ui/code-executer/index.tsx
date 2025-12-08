@@ -7,7 +7,7 @@ type props = Pick<Awaited<ReturnType<typeof getProblemsContent>>, "filePath" | "
 
 export function CodeExecuter({ filePath, executers }: props) {
   return (
-    <div>
+    <div className="not-prose">
       {
         executers.map(ex => {
           if (ex.type === "function") {

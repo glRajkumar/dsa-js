@@ -1,4 +1,4 @@
-import { useRef, useState } from "react"
+import { useRef } from "react"
 
 import type { classMetadataT } from "@/utils/code-executer/schema"
 import { getFnOrCls } from "@/utils/code-executer/extractor"
@@ -8,7 +8,6 @@ import { CardWrapper } from "@/components/shadcn-ui/card"
 import { FunctionExecuter } from "./function-executer"
 
 export function ClassExecuter({ name, construct, methods, description, filePath }: classMetadataT & { filePath: string }) {
-  const [initialised, setInitialised] = useState(false)
   const ref = useRef<any>(null)
 
   async function init(args: any[]) {
@@ -26,6 +25,7 @@ export function ClassExecuter({ name, construct, methods, description, filePath 
     <CardWrapper
       title={`Class: ${name}`}
       description={description}
+      wrapperCls="mb-4"
     >
       {
         construct &&

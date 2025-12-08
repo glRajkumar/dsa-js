@@ -154,7 +154,7 @@ export function SwitchWrapper({ name, label, error, invalid, className, checked,
   return (
     <Field className={className} data-invalid={isInvalid}>
       <div className='flex items-center justify-between gap-4'>
-        {label && <FieldLabel htmlFor={name} className='font-normal'>{label}</FieldLabel>}
+        {label && <FieldLabel htmlFor={name}>{label}</FieldLabel>}
         <Switch
           id={name}
           checked={checked}
