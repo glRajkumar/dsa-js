@@ -162,17 +162,21 @@ const paramsData: paramT[] = [
         },
       },
       defaultValue: {
-        inner1: "ghk",
-        inner2: 3,
-        inner3: true,
-        inner4: {
-          i4i1: "gjhk",
-          i4i2: 2,
-          i4i3: false,
-          i4i4: {
-            x: "yhtg",
-            y: "nidh",
-            z: "iksh"
+        obj1: {
+          inner1: "ghk",
+          inner2: 3,
+          inner3: true,
+          inner4: {
+            obj1: {
+              i4i1: "gjhk",
+              i4i2: 2,
+              i4i3: false,
+              i4i4: {
+                x: "yhtg",
+                y: "nidh",
+                z: "iksh"
+              }
+            }
           }
         }
       }
@@ -185,15 +189,14 @@ const paramsData: paramT[] = [
     constraints: {
       type: "object",
       defaultValue: {
-        x: "somevalue",
-        y: true,
-        z: 6,
+        obj1: {
+          x: "somevalue",
+          y: true,
+          z: 6,
+        }
       }
     }
   },
-
-
-
   {
     name: "arrString",
     type: "array",

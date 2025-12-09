@@ -1,4 +1,4 @@
-import type { objectConstraintT, paramT } from "./schema"
+import type { arrayConstraintT, objectConstraintT, paramT } from "./schema"
 
 function getPrimitiveFallback(type: string) {
   switch (type) {
@@ -87,4 +87,23 @@ export function getDefaultValues(params: paramT[]) {
   }
 
   return result
+}
+
+export const getDefaultValueByConstraints = (constraints?: objectConstraintT | arrayConstraintT) => {
+  if (!constraints) return ""
+
+  switch (constraints.type) {
+    case "string":
+      return constraints.constraints?.defaultValue || ""
+    case "number":
+      return constraints.constraints?.defaultValue || 0
+    case "boolean":
+      return constraints.constraints?.defaultValue || false
+    case "array":
+      return constraints.constraints?.defaultValue || []
+    case "object":
+      return constraints.constraints?.defaultValue || {}
+    default:
+      return ""
+  }
 }

@@ -10,6 +10,7 @@ import type {
   numberConstraintT,
 } from "@/utils/code-executer/schema"
 
+import { getDefaultValueByConstraints } from "@/utils/code-executer/get-default"
 import { cn } from "@/lib/utils"
 
 import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/shadcn-ui/card"
@@ -247,25 +248,6 @@ function ArrayField<T extends FieldValues>({
     name: name as any,
   })
 
-  const getDefaultValue = () => {
-    if (!constraints) return ""
-
-    switch (constraints.type) {
-      case "string":
-        return constraints.constraints?.defaultValue || ""
-      case "number":
-        return constraints.constraints?.defaultValue || 0
-      case "boolean":
-        return constraints.constraints?.defaultValue || false
-      case "array":
-        return []
-      case "object":
-        return {}
-      default:
-        return ""
-    }
-  }
-
   return (
     <Card>
       <CardHeader>
@@ -290,7 +272,7 @@ function ArrayField<T extends FieldValues>({
             size="sm"
             type="button"
             variant="outline"
-            onClick={() => append(getDefaultValue() as any)}
+            onClick={() => append(getDefaultValueByConstraints(constraints) as any)}
             disabled={constraints?.max !== undefined && fields.length >= constraints.max}
           >
             <Plus className="h-4 w-4" />
@@ -422,21 +404,6 @@ function ObjectField<T extends FieldValues>({
   const currentValue: any = watch(name) || {}
   const objectKeys = Object.keys(currentValue)
 
-  const getDefaultValue = () => {
-    if (!constraints) return ""
-
-    switch (constraints.type) {
-      case "string":
-        return constraints.constraints?.defaultValue || ""
-      case "number":
-        return constraints.constraints?.defaultValue || 0
-      case "boolean":
-        return constraints.constraints?.defaultValue || false
-      default:
-        return ""
-    }
-  }
-
   const handleAddKey = () => {
     if (!newKey.trim() || currentValue[newKey] !== undefined) {
       return
@@ -444,7 +411,7 @@ function ObjectField<T extends FieldValues>({
 
     setValue(name, {
       ...currentValue,
-      [newKey]: getDefaultValue(),
+      [newKey]: getDefaultValueByConstraints(constraints),
     } as any)
 
     setNewKey("")
