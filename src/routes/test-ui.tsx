@@ -48,7 +48,7 @@ const paramsData: paramT[] = [
     description: "somedescription",
     constraints: {
       type: "string",
-      constraint: {
+      constraints: {
         minLength: 1,
         maxLength: 10,
         defaultValue: "somevalue",
@@ -65,7 +65,7 @@ const paramsData: paramT[] = [
     description: "somedescription",
     constraints: {
       type: "number",
-      constraint: {
+      constraints: {
         min: 1,
         max: 10,
         step: 1,
@@ -83,7 +83,7 @@ const paramsData: paramT[] = [
     description: "somedescription",
     constraints: {
       type: "boolean",
-      constraint: {
+      constraints: {
         defaultValue: true,
       },
       defaultValue: {
@@ -98,10 +98,10 @@ const paramsData: paramT[] = [
     description: "somedescription",
     constraints: {
       type: "object",
-      constraint: {
+      constraints: {
         inner1: {
           type: "string",
-          constraint: {
+          constraints: {
             minLength: 1,
             maxLength: 10,
             defaultValue: "somevalue",
@@ -109,7 +109,7 @@ const paramsData: paramT[] = [
         },
         inner2: {
           type: "number",
-          constraint: {
+          constraints: {
             min: 1,
             max: 10,
             step: 1,
@@ -118,16 +118,16 @@ const paramsData: paramT[] = [
         },
         inner3: {
           type: "boolean",
-          constraint: {
+          constraints: {
             defaultValue: true,
           },
         },
         inner4: {
           type: "object",
-          constraint: {
+          constraints: {
             i4i1: {
               type: "string",
-              constraint: {
+              constraints: {
                 minLength: 1,
                 maxLength: 10,
                 defaultValue: "somevalue",
@@ -135,7 +135,7 @@ const paramsData: paramT[] = [
             },
             i4i2: {
               type: "number",
-              constraint: {
+              constraints: {
                 min: 1,
                 max: 10,
                 defaultValue: 5,
@@ -143,13 +143,13 @@ const paramsData: paramT[] = [
             },
             i4i3: {
               type: "boolean",
-              constraint: {
+              constraints: {
                 defaultValue: false,
               },
             },
             i4i4: {
               type: "object",
-              constraint: {
+              constraints: {
                 i4i4i1: {
                   type: "string",
                   defaultValue: {
@@ -200,7 +200,7 @@ const paramsData: paramT[] = [
     description: "somedescription",
     constraints: {
       type: "string",
-      constraint: {
+      constraints: {
         minLength: 1,
         maxLength: 10,
         defaultValue: "somevalue",
@@ -214,7 +214,7 @@ const paramsData: paramT[] = [
     description: "somedescription",
     constraints: {
       type: "number",
-      constraint: {
+      constraints: {
         min: 1,
         max: 10,
         step: 1,
@@ -229,7 +229,7 @@ const paramsData: paramT[] = [
     description: "somedescription",
     constraints: {
       type: "boolean",
-      constraint: {
+      constraints: {
         defaultValue: true,
       },
       defaultValue: [true, false]
@@ -241,10 +241,10 @@ const paramsData: paramT[] = [
     description: "somedescription",
     constraints: {
       type: "object",
-      constraint: {
+      constraints: {
         inner1: {
           type: "string",
-          constraint: {
+          constraints: {
             minLength: 1,
             maxLength: 10,
             defaultValue: "somevalue",
@@ -252,7 +252,7 @@ const paramsData: paramT[] = [
         },
         inner2: {
           type: "number",
-          constraint: {
+          constraints: {
             min: 1,
             max: 10,
             step: 1,
@@ -261,16 +261,16 @@ const paramsData: paramT[] = [
         },
         inner3: {
           type: "boolean",
-          constraint: {
+          constraints: {
             defaultValue: true,
           },
         },
         inner4: {
           type: "object",
-          constraint: {
+          constraints: {
             i4i1: {
               type: "string",
-              constraint: {
+              constraints: {
                 minLength: 1,
                 maxLength: 10,
                 defaultValue: "somevalue",
@@ -278,7 +278,7 @@ const paramsData: paramT[] = [
             },
             i4i2: {
               type: "number",
-              constraint: {
+              constraints: {
                 min: 1,
                 max: 10,
                 defaultValue: 5,
@@ -286,13 +286,13 @@ const paramsData: paramT[] = [
             },
             i4i3: {
               type: "boolean",
-              constraint: {
+              constraints: {
                 defaultValue: false,
               },
             },
             i4i4: {
               type: "object",
-              constraint: {
+              constraints: {
                 i4i4i1: {
                   type: "string",
                   defaultValue: {

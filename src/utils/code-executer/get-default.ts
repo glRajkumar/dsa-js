@@ -32,19 +32,19 @@ function getObjectDefault(constraints?: objectConstraintT | any): any {
     return constraints.defaultValue
   }
 
-  if (!constraints?.constraint || typeof constraints.constraint !== "object") {
+  if (!constraints?.constraints || typeof constraints.constraints !== "object") {
     return {}
   }
 
   const obj: Record<string, any> = {}
 
-  for (const key in constraints.constraint) {
-    const field = constraints.constraint[key]
+  for (const key in constraints.constraints) {
+    const field = constraints.constraints[key]
 
     if (!field) continue
 
     if (field.type === "string" || field.type === "number" || field.type === "boolean") {
-      obj[key] = field.constraint?.defaultValue ?? getPrimitiveFallback(field.type)
+      obj[key] = field.constraints?.defaultValue ?? getPrimitiveFallback(field.type)
     }
 
     else if (field.type === "object") {
@@ -64,12 +64,12 @@ function getArrayDefault(constraints?: any): any[] {
     return constraints.defaultValue
   }
 
-  if (!constraints?.constraint) return []
+  if (!constraints?.constraints) return []
 
-  const single = constraints.constraint
+  const single = constraints.constraints
 
   if (single.type === "string" || single.type === "number" || single.type === "boolean") {
-    return [single.constraint?.defaultValue ?? getPrimitiveFallback(single.type)]
+    return [single.constraints?.defaultValue ?? getPrimitiveFallback(single.type)]
   }
 
   if (single.type === "object") {

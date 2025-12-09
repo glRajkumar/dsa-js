@@ -1,10 +1,6 @@
+import { useState } from "react"
 import { FieldValues, Path, useFieldArray, useFormContext } from "react-hook-form"
 import { Plus, Trash } from "lucide-react"
-
-import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/shadcn-ui/card"
-import { InputWrapper, SwitchWrapper } from "@/components/shadcn-ui/field-wrapper-rhf"
-import { Button } from "@/components/shadcn-ui/button"
-import { Badge } from "@/components/shadcn-ui/badge"
 
 import type {
   paramT,
@@ -15,6 +11,12 @@ import type {
 } from "@/utils/code-executer/schema"
 
 import { cn } from "@/lib/utils"
+
+import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/shadcn-ui/card"
+import { InputWrapper, SwitchWrapper } from "@/components/shadcn-ui/field-wrapper-rhf"
+import { Button } from "@/components/shadcn-ui/button"
+import { Badge } from "@/components/shadcn-ui/badge"
+import { Input } from "@/components/shadcn-ui/input"
 
 interface ParamFieldProps<T extends FieldValues> {
   param: paramT
@@ -29,7 +31,7 @@ export function ParamField<T extends FieldValues>({ param, name }: ParamFieldPro
           name={name}
           label={param.name}
           description={param.description}
-          constraints={param.constraints as arrayConstraintT | undefined}
+          constraints={param.constraints}
         />
       )
 
@@ -39,7 +41,7 @@ export function ParamField<T extends FieldValues>({ param, name }: ParamFieldPro
           name={name}
           label={param.name}
           description={param.description}
-          constraints={param.constraints as Record<string, objectConstraintT> | undefined}
+          constraints={param.constraints}
         />
       )
 
@@ -148,6 +150,7 @@ function BooleanField<T extends FieldValues>({
       label={label}
       control={control}
       description={description}
+      className="[&_div]:justify-start"
     />
   )
 }
@@ -184,7 +187,7 @@ function ArrayItemRenderer<T extends FieldValues>({
         <ArrayField
           name={itemName}
           label={label}
-          constraints={constraints.constraint}
+          constraints={constraints.constraints}
         />
       )
 
@@ -193,7 +196,7 @@ function ArrayItemRenderer<T extends FieldValues>({
         <ObjectField
           name={itemName}
           label={label}
-          constraints={constraints.constraint}
+          constraints={constraints?.constraints?.[itemName]}
         />
       )
 
@@ -210,7 +213,7 @@ function ArrayItemRenderer<T extends FieldValues>({
         <NumberField
           name={itemName}
           label={label}
-          constraints={constraints.constraint}
+          constraints={constraints.constraints}
         />
       )
 
@@ -219,7 +222,7 @@ function ArrayItemRenderer<T extends FieldValues>({
         <StringField
           name={itemName}
           label={label}
-          constraints={constraints.constraint}
+          constraints={constraints.constraints}
         />
       )
   }
@@ -249,11 +252,11 @@ function ArrayField<T extends FieldValues>({
 
     switch (constraints.type) {
       case "string":
-        return constraints.constraint?.defaultValue || ""
+        return constraints.constraints?.defaultValue || ""
       case "number":
-        return constraints.constraint?.defaultValue || 0
+        return constraints.constraints?.defaultValue || 0
       case "boolean":
-        return constraints.constraint?.defaultValue || false
+        return constraints.constraints?.defaultValue || false
       case "array":
         return []
       case "object":
@@ -333,21 +336,33 @@ function ArrayField<T extends FieldValues>({
 interface ObjectFieldRendererProps<T extends FieldValues> {
   label: string
   fieldName: Path<T>
-  constraint: objectConstraintT
+  constraints?: objectConstraintT
 }
 
 function ObjectFieldRenderer<T extends FieldValues>({
   label,
   fieldName,
-  constraint,
+  constraints,
 }: ObjectFieldRendererProps<T>) {
-  switch (constraint.type) {
+  const { control } = useFormContext<T>()
+
+  if (!constraints) {
+    return (
+      <InputWrapper
+        name={fieldName}
+        control={control}
+        label={label}
+      />
+    )
+  }
+
+  switch (constraints.type) {
     case "array":
       return (
         <ArrayField
           name={fieldName}
           label={label}
-          constraints={constraint.constraint}
+          constraints={constraints.constraints}
         />
       )
 
@@ -356,7 +371,7 @@ function ObjectFieldRenderer<T extends FieldValues>({
         <ObjectField
           name={fieldName}
           label={label}
-          constraints={constraint.constraint}
+          constraints={constraints?.constraints?.[fieldName]}
         />
       )
 
@@ -373,7 +388,7 @@ function ObjectFieldRenderer<T extends FieldValues>({
         <NumberField
           name={fieldName}
           label={label}
-          constraints={constraint.constraint}
+          constraints={constraints.constraints}
         />
       )
 
@@ -382,7 +397,7 @@ function ObjectFieldRenderer<T extends FieldValues>({
         <StringField
           name={fieldName}
           label={label}
-          constraints={constraint.constraint}
+          constraints={constraints.constraints}
         />
       )
   }
@@ -392,7 +407,7 @@ interface ObjectFieldProps<T extends FieldValues> {
   name: Path<T>
   label: string
   description?: string
-  constraints?: Record<string, objectConstraintT>
+  constraints?: objectConstraintT
 }
 
 function ObjectField<T extends FieldValues>({
@@ -401,25 +416,44 @@ function ObjectField<T extends FieldValues>({
   description,
   constraints,
 }: ObjectFieldProps<T>) {
-  if (!constraints || Object.keys(constraints).length === 0) {
-    return (
-      <Card className="gap-3">
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <CardTitle>{label}</CardTitle>
-            <Badge variant="secondary">Object</Badge>
-          </div>
+  const { setValue, watch } = useFormContext<T>()
+  const [newKey, setNewKey] = useState("")
 
-          {description && (
-            <CardDescription>{description}</CardDescription>
-          )}
-        </CardHeader>
+  const currentValue: any = watch(name) || {}
+  const objectKeys = Object.keys(currentValue)
 
-        <CardContent className="text-sm text-muted-foreground">
-          No schema defined for this object
-        </CardContent>
-      </Card>
-    )
+  const getDefaultValue = () => {
+    if (!constraints) return ""
+
+    switch (constraints.type) {
+      case "string":
+        return constraints.constraints?.defaultValue || ""
+      case "number":
+        return constraints.constraints?.defaultValue || 0
+      case "boolean":
+        return constraints.constraints?.defaultValue || false
+      default:
+        return ""
+    }
+  }
+
+  const handleAddKey = () => {
+    if (!newKey.trim() || currentValue[newKey] !== undefined) {
+      return
+    }
+
+    setValue(name, {
+      ...currentValue,
+      [newKey]: getDefaultValue(),
+    } as any)
+
+    setNewKey("")
+  }
+
+  const handleDeleteKey = (key: string) => {
+    const newValue = { ...currentValue }
+    delete newValue[key]
+    setValue(name, newValue as any)
   }
 
   return (
@@ -431,28 +465,70 @@ function ObjectField<T extends FieldValues>({
           <Badge variant="secondary">Object</Badge>
 
           <Badge variant="outline" className="ml-1">
-            {Object.keys(constraints).length} fields
+            {objectKeys.length} keys
           </Badge>
         </div>
 
         {description && (
           <CardDescription>{description}</CardDescription>
         )}
+
+        <CardAction>
+          <div className="flex gap-2">
+            <Input
+              value={newKey}
+              onChange={e => setNewKey(e.target.value)}
+              placeholder="Key name"
+              className="h-9"
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault()
+                  handleAddKey()
+                }
+              }}
+            />
+            <Button
+              size="sm"
+              type="button"
+              variant="outline"
+              onClick={handleAddKey}
+              disabled={!newKey.trim() || currentValue[newKey] !== undefined}
+            >
+              <Plus className="h-4 w-4" />
+              Add
+            </Button>
+          </div>
+        </CardAction>
       </CardHeader>
 
       <CardContent className="space-y-3">
-        {Object.entries(constraints).map(([key, constraint]) => {
-          const fieldName = `${name}.${key}` as Path<T>
+        {
+          objectKeys?.map((key) => {
+            const fieldName = `${name}.${key}` as Path<T>
 
-          return (
-            <ObjectFieldRenderer
-              key={key}
-              label={key}
-              fieldName={fieldName}
-              constraint={constraint}
-            />
-          )
-        })}
+            return (
+              <div key={key} className={cn("flex gap-2", constraints?.type === "boolean" ? "items-center" : "items-start")}>
+                <div className="flex-1">
+                  <ObjectFieldRenderer
+                    label={key}
+                    fieldName={fieldName}
+                    constraints={constraints}
+                  />
+                </div>
+
+                <Button
+                  size="icon"
+                  type="button"
+                  variant="ghost"
+                  onClick={() => handleDeleteKey(key)}
+                  className={cn(constraints?.type !== "boolean" && "mt-6")}
+                >
+                  <Trash className="h-4 w-4 text-destructive" />
+                </Button>
+              </div>
+            )
+          })
+        }
       </CardContent>
     </Card>
   )
