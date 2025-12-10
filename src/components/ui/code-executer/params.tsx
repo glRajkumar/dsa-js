@@ -14,14 +14,117 @@ import type {
 import { getDefaultValueByConstraints } from "@/utils/code-executer/get-default"
 import { cn } from "@/lib/utils"
 
-import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/shadcn-ui/card"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/shadcn-ui/select"
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/shadcn-ui/card"
+import { Field, FieldDescription, FieldLabel } from "@/components/shadcn-ui/field"
 import { InputWrapper, SwitchWrapper } from "@/components/shadcn-ui/field-wrapper-rhf"
+import { SelectWrapper } from "@/components/shadcn-ui/select"
 import { Textarea } from "@/components/shadcn-ui/textarea"
 import { Button } from "@/components/shadcn-ui/button"
+import { Switch } from "@/components/shadcn-ui/switch"
 import { Badge } from "@/components/shadcn-ui/badge"
 import { Input } from "@/components/shadcn-ui/input"
-import { Label } from "@/components/shadcn-ui/label"
+
+type ObjectConstraintMap = Record<string, ConstraintLeafT>
+
+function isConstraintLeaf(
+  c: objectConstraintT | ConstraintLeafT | undefined,
+): c is ConstraintLeafT {
+  return !!c && typeof c === "object" && "type" in c
+}
+
+function isObjectConstraintMap(
+  c: objectConstraintT | ConstraintLeafT | undefined,
+): c is ObjectConstraintMap {
+  return !!c && typeof c === "object" && !("type" in c)
+}
+
+function isObjectLeaf(
+  c: ConstraintLeafT | undefined,
+): c is Extract<ConstraintLeafT, { type: "object" }> {
+  return !!c && c.type === "object"
+}
+
+function resolveConstraint(
+  root: objectConstraintT | undefined,
+  relativePath: string,
+): ConstraintLeafT | undefined {
+  if (!root) return undefined
+  if (!relativePath) {
+    return isConstraintLeaf(root) ? root : undefined
+  }
+
+  const parts = relativePath.split(".")
+  let current: objectConstraintT | ConstraintLeafT | undefined = root
+
+  for (const key of parts) {
+    if (!current) return undefined
+
+    if (isConstraintLeaf(current) && current.type !== "object") {
+      return current
+    }
+
+    if (isConstraintLeaf(current) && current.type === "object") {
+      const map: any = current.constraints
+      if (!map) return undefined
+      current = map[key]
+      continue
+    }
+
+    if (isObjectConstraintMap(current)) {
+      current = current[key]
+      continue
+    }
+
+    return undefined
+  }
+
+  return isConstraintLeaf(current) ? current : undefined
+}
+
+function getObjectConstraintLabel(constraints?: objectConstraintT): string {
+  if (!constraints) return "Object"
+
+  if (isObjectConstraintMap(constraints)) {
+    const keys = Object.keys(constraints).slice(0, 3)
+    const preview = keys.map(key => {
+      const constraint = constraints[key]
+      return `${key}: ${constraint.type}`
+    }).join("; ")
+
+    const remaining = Object.keys(constraints).length - 3
+    return `Object{${preview}${remaining > 0 ? `; +${remaining} more` : ""}}`
+  }
+
+  if (isConstraintLeaf(constraints) && constraints.type === "object" && constraints.constraints) {
+    const innerConstraints = constraints.constraints as any
+    if (typeof innerConstraints === "object" && !("type" in innerConstraints)) {
+      const keys = Object.keys(innerConstraints).slice(0, 3)
+      const preview = keys.map(key => {
+        const constraint = innerConstraints[key]
+        return `${key}: ${constraint.type}`
+      }).join("; ")
+
+      const remaining = Object.keys(innerConstraints).length - 3
+      return `Object{${preview}${remaining > 0 ? `; +${remaining} more` : ""}}`
+    }
+  }
+
+  return "Object"
+}
+
+function isPredefinedConstraint(
+  constraints: arrayConstraintT | undefined,
+  index: number
+): boolean {
+  return !!(constraints?.byIndex && constraints.byIndex[index])
+}
 
 interface ParamFieldProps<T extends FieldValues> {
   param: paramT
@@ -85,7 +188,7 @@ export function ParamField<T extends FieldValues>({ param, name }: ParamFieldPro
           name={name}
           label={param.name}
           description={param.description}
-          constraints={param?.constraints}
+          constraints={param.constraints}
         />
       )
   }
@@ -103,22 +206,22 @@ function DynamicTypeField<T extends FieldValues>({
   description,
 }: DynamicTypeFieldProps<T>) {
   const { setValue, watch } = useFormContext<T>()
-  const [selectedType, setSelectedType] = useState<string>("string")
+  const [selectedType, setSelectedType] = useState("String")
   const currentValue = watch(name)
 
   const handleTypeChange = (newType: string) => {
     setSelectedType(newType)
     switch (newType) {
-      case "boolean":
+      case "Boolean":
         setValue(name, false as any)
         break
-      case "number":
+      case "Number":
         setValue(name, 0 as any)
         break
-      case "array":
+      case "Array":
         setValue(name, [] as any)
         break
-      case "object":
+      case "Object":
         setValue(name, {} as any)
         break
       default:
@@ -131,73 +234,62 @@ function DynamicTypeField<T extends FieldValues>({
       const parsed = JSON.parse(value)
       setValue(name, parsed as any)
     } catch (e) {
-      // Invalid JSON, don't update
       console.log(e)
     }
   }
 
   return (
-    <div className="space-y-2">
-      <Label>{label}</Label>
-      {description && (
-        <p className="text-sm text-muted-foreground">{description}</p>
-      )}
+    <Field>
+      {label && <FieldLabel htmlFor={name}>{label}</FieldLabel>}
 
-      <Select value={selectedType} onValueChange={handleTypeChange}>
-        <SelectTrigger>
-          <SelectValue placeholder="Select type" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="string">String</SelectItem>
-          <SelectItem value="number">Number</SelectItem>
-          <SelectItem value="boolean">Boolean</SelectItem>
-          <SelectItem value="array">Array</SelectItem>
-          <SelectItem value="object">Object</SelectItem>
-        </SelectContent>
-      </Select>
+      <SelectWrapper
+        value={selectedType}
+        onValueChange={handleTypeChange}
+        triggerCls="mb-1"
+        options={["String", "Number", "Boolean", "Array", "Object"]}
+      />
 
-      {selectedType === "string" && (
+      {selectedType === "String" && (
         <Input
-          value={(currentValue as string) || ""}
+          id={name}
+          value={(currentValue as string) ?? ""}
           onChange={(e) => setValue(name, e.target.value as any)}
           placeholder="Enter string value"
         />
       )}
 
-      {selectedType === "number" && (
+      {selectedType === "Number" && (
         <Input
+          id={name}
           type="number"
-          value={(currentValue as number) || 0}
+          value={(currentValue as number) ?? 0}
           onChange={(e) => setValue(name, Number(e.target.value) as any)}
-          placeholder="Enter number"
+          placeholder="Enter number value"
         />
       )}
 
-      {selectedType === "boolean" && (
-        <Select
-          value={String(currentValue)}
-          onValueChange={(v) => setValue(name, (v === "true") as any)}
-        >
-          <SelectTrigger>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="true">True</SelectItem>
-            <SelectItem value="false">False</SelectItem>
-          </SelectContent>
-        </Select>
+      {selectedType === "Boolean" && (
+        <div>
+          <Switch
+            id={name}
+            checked={!!currentValue}
+            onCheckedChange={(v) => setValue(name, v as any)}
+          />
+        </div>
       )}
 
-      {(selectedType === "array" || selectedType === "object") && (
+      {(selectedType === "Array" || selectedType === "Object") && (
         <Textarea
+          id={name}
           value={JSON.stringify(currentValue, null, 2)}
           onChange={(e) => handleJsonChange(e.target.value)}
           placeholder={`Enter JSON ${selectedType}`}
-          className="font-mono text-sm"
           rows={6}
         />
       )}
-    </div>
+
+      {description && <FieldDescription>{description}</FieldDescription>}
+    </Field>
   )
 }
 
@@ -284,7 +376,6 @@ interface ArrayItemProps<T extends FieldValues> {
   itemName: Path<T>
   index: number
   constraints?: ConstraintLeafT
-  label?: string
 }
 
 function ArrayItemRenderer<T extends FieldValues>({
@@ -294,59 +385,19 @@ function ArrayItemRenderer<T extends FieldValues>({
 }: ArrayItemProps<T>) {
   const label = `Item ${index + 1}`
 
-  if (!constraints) {
-    return (
-      <DynamicTypeField
-        name={itemName}
-        label={label}
-      />
-    )
-  }
+  if (!constraints) return <DynamicTypeField name={itemName} label={label} />
 
   switch (constraints.type) {
     case "array":
-      return (
-        <ArrayField
-          name={itemName}
-          label={label}
-          constraints={constraints.constraints}
-        />
-      )
-
+      return <ArrayField name={itemName} label={label} constraints={constraints.constraints} />
     case "object":
-      return (
-        <ObjectField
-          name={itemName}
-          label={label}
-          constraints={constraints.constraints}
-        />
-      )
-
+      return <ObjectField name={itemName} label={label} constraints={constraints.constraints} />
     case "boolean":
-      return (
-        <BooleanField
-          name={itemName}
-          label={label}
-        />
-      )
-
+      return <BooleanField name={itemName} label={label} />
     case "number":
-      return (
-        <NumberField
-          name={itemName}
-          label={label}
-          constraints={constraints.constraints}
-        />
-      )
-
+      return <NumberField name={itemName} label={label} constraints={constraints.constraints} />
     default:
-      return (
-        <StringField
-          name={itemName}
-          label={label}
-          constraints={constraints.constraints}
-        />
-      )
+      return <StringField name={itemName} label={label} constraints={constraints.constraints} />
   }
 }
 
@@ -379,16 +430,28 @@ function ArrayField<T extends FieldValues>({
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <CardTitle>{label}</CardTitle>
 
-          <Badge variant="secondary" className="ml-2">
+          <Badge variant="secondary">
             Array{constraints?.template ? `[${constraints.template.type}]` : ""}
           </Badge>
 
-          <Badge variant="outline" className="ml-1">
+          <Badge variant="outline">
             {fields.length} items
           </Badge>
+
+          {constraints?.min !== undefined && (
+            <Badge variant="outline">
+              min: {constraints.min}
+            </Badge>
+          )}
+
+          {constraints?.max !== undefined && (
+            <Badge variant="outline">
+              max: {constraints.max}
+            </Badge>
+          )}
         </div>
 
         {description && (
@@ -404,7 +467,7 @@ function ArrayField<T extends FieldValues>({
             disabled={constraints?.max !== undefined && fields.length >= constraints.max}
           >
             <Plus className="h-4 w-4" />
-            Add
+            Add {constraints?.max !== undefined && `(${fields.length}/${constraints.max})`}
           </Button>
         </CardAction>
       </CardHeader>
@@ -413,6 +476,9 @@ function ArrayField<T extends FieldValues>({
         {fields.map((field, index) => {
           const itemName = `${name}.${index}` as Path<T>
           const itemConstraint = constraints?.byIndex?.[index] || constraints?.template
+          const isPredefined = isPredefinedConstraint(constraints, index)
+          const canDelete = !isPredefined &&
+            (constraints?.min === undefined || fields.length > constraints.min)
 
           return (
             <div
@@ -435,9 +501,13 @@ function ArrayField<T extends FieldValues>({
                 type="button"
                 variant="ghost"
                 onClick={() => remove(index)}
-                disabled={
-                  constraints?.min !== undefined &&
-                  fields.length <= constraints.min
+                disabled={!canDelete}
+                title={
+                  isPredefined
+                    ? "Cannot delete predefined item"
+                    : !canDelete
+                      ? `Minimum ${constraints?.min} items required`
+                      : "Delete item"
                 }
                 className={cn(itemConstraint?.type !== "boolean" && "mt-6")}
               >
@@ -462,59 +532,19 @@ function ObjectFieldRenderer<T extends FieldValues>({
   fieldName,
   constraints,
 }: ObjectFieldRendererProps<T>) {
-  if (!constraints) {
-    return (
-      <DynamicTypeField
-        name={fieldName}
-        label={label}
-      />
-    )
-  }
+  if (!constraints) return <DynamicTypeField name={fieldName} label={label} />
 
   switch (constraints.type) {
     case "array":
-      return (
-        <ArrayField
-          name={fieldName}
-          label={label}
-          constraints={constraints.constraints}
-        />
-      )
-
+      return <ArrayField name={fieldName} label={label} constraints={constraints.constraints} />
     case "object":
-      return (
-        <ObjectField
-          name={fieldName}
-          label={label}
-          constraints={constraints.constraints}
-        />
-      )
-
+      return <ObjectField name={fieldName} label={label} constraints={constraints.constraints} />
     case "boolean":
-      return (
-        <BooleanField
-          name={fieldName}
-          label={label}
-        />
-      )
-
+      return <BooleanField name={fieldName} label={label} />
     case "number":
-      return (
-        <NumberField
-          name={fieldName}
-          label={label}
-          constraints={constraints.constraints}
-        />
-      )
-
+      return <NumberField name={fieldName} label={label} constraints={constraints.constraints} />
     default:
-      return (
-        <StringField
-          name={fieldName}
-          label={label}
-          constraints={constraints.constraints}
-        />
-      )
+      return <StringField name={fieldName} label={label} constraints={constraints.constraints} />
   }
 }
 
@@ -534,44 +564,66 @@ function ObjectField<T extends FieldValues>({
   const { setValue, watch } = useFormContext<T>()
   const [newKey, setNewKey] = useState("")
 
-  const currentValue: any = watch(name) || {}
+  const currentValue: Record<string, unknown> = (watch(name) as any) ?? {}
   const objectKeys = Object.keys(currentValue)
 
-  const isLeafConstraint = constraints && 'type' in constraints
-  const propertyConstraints = !isLeafConstraint ? constraints as Record<string, ConstraintLeafT> : undefined
+  const constraintKeys = new Set<string>()
+
+  if (constraints) {
+    if (isObjectConstraintMap(constraints)) {
+      Object.keys(constraints).forEach(k => constraintKeys.add(k))
+    } else if (isConstraintLeaf(constraints) && constraints.type === "object" && constraints.constraints) {
+      const innerConstraints = constraints.constraints as any
+      if (typeof innerConstraints === "object" && !("type" in innerConstraints)) {
+        Object.keys(innerConstraints).forEach(k => constraintKeys.add(k))
+      }
+    }
+  }
 
   const handleAddKey = () => {
-    if (!newKey.trim() || currentValue[newKey] !== undefined) {
-      return
-    }
+    const key = newKey.trim()
+    if (!key || currentValue[key] !== undefined) return
 
-    const defaultVal = propertyConstraints?.[newKey]
-      ? getDefaultValueByConstraints(propertyConstraints[newKey])
-      : ""
+    let defaultVal: unknown = ""
+
+    if (constraints) {
+      if (isConstraintLeaf(constraints) && constraints.type === "object" && constraints.constraints) {
+        const childConstraint = (constraints as any).constraints[key]
+        if (childConstraint) {
+          defaultVal = getDefaultValueByConstraints(childConstraint)
+        }
+      }
+      else if (isObjectConstraintMap(constraints) && constraints[key]) {
+        defaultVal = getDefaultValueByConstraints(constraints[key])
+      }
+      else if (isConstraintLeaf(constraints) && constraints.type !== "object") {
+        defaultVal = getDefaultValueByConstraints(constraints)
+      }
+    }
 
     setValue(name, {
       ...currentValue,
-      [newKey]: defaultVal,
+      [key]: defaultVal
     } as any)
 
     setNewKey("")
   }
 
   const handleDeleteKey = (key: string) => {
-    const newValue = { ...currentValue }
-    delete newValue[key]
-    setValue(name, newValue as any)
+    const newVal = { ...currentValue }
+    delete newVal[key]
+    setValue(name, newVal as any)
   }
 
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <CardTitle>{label}</CardTitle>
 
-          <Badge variant="secondary">Object</Badge>
+          <Badge variant="secondary">{getObjectConstraintLabel(constraints)}</Badge>
 
-          <Badge variant="outline" className="ml-1">
+          <Badge variant="outline">
             {objectKeys.length} keys
           </Badge>
         </div>
@@ -599,7 +651,7 @@ function ObjectField<T extends FieldValues>({
               type="button"
               variant="outline"
               onClick={handleAddKey}
-              disabled={!newKey.trim() || currentValue[newKey] !== undefined}
+              disabled={!newKey.trim() || currentValue[newKey.trim()] !== undefined}
             >
               <Plus className="h-4 w-4" />
               Add
@@ -609,9 +661,42 @@ function ObjectField<T extends FieldValues>({
       </CardHeader>
 
       <CardContent className="space-y-3">
-        {objectKeys?.map((key) => {
+        {objectKeys.map((key) => {
           const fieldName = `${name}.${key}` as Path<T>
-          const keyConstraint = propertyConstraints?.[key]
+          const parentPath = name as string
+          const fieldNameStr = fieldName as string
+
+          const relativePath =
+            fieldNameStr.startsWith(parentPath + ".")
+              ? fieldNameStr.slice(parentPath.length + 1)
+              : fieldNameStr
+
+          const keyConstraint = resolveConstraint(constraints, relativePath)
+          const value = currentValue[key]
+          const isNestedObject =
+            typeof value === "object" && value !== null && !Array.isArray(value)
+
+          const isConstraintKey = constraintKeys.has(key)
+
+          if (isNestedObject) {
+            let nestedConstraints: objectConstraintT | undefined
+
+            if (isObjectLeaf(keyConstraint)) {
+              nestedConstraints = keyConstraint.constraints
+            } else if (keyConstraint) {
+              nestedConstraints = keyConstraint as unknown as objectConstraintT
+            }
+
+            return (
+              <div key={key}>
+                <ObjectField
+                  name={fieldName}
+                  label={key}
+                  constraints={nestedConstraints}
+                />
+              </div>
+            )
+          }
 
           return (
             <div
@@ -634,6 +719,8 @@ function ObjectField<T extends FieldValues>({
                 type="button"
                 variant="ghost"
                 onClick={() => handleDeleteKey(key)}
+                disabled={isConstraintKey}
+                title={isConstraintKey ? "Cannot delete constraint-defined key" : "Delete key"}
                 className={cn(keyConstraint?.type !== "boolean" && "mt-6")}
               >
                 <Trash className="h-4 w-4 text-destructive" />
