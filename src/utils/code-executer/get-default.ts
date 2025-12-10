@@ -1,4 +1,4 @@
-import type { arrayConstraintT, objectConstraintT, paramT } from "./schema"
+import type { arrayConstraintT, objectConstraintT, paramT, ConstraintLeafT } from "./schema"
 
 function getPrimitiveFallback(type: string) {
   switch (type) {
@@ -10,73 +10,68 @@ function getPrimitiveFallback(type: string) {
 }
 
 function getDefaultValueForParam(param: paramT): any {
-  const { type, constraints } = param
+  const { type, defaultValue } = param
 
-  if (type === "string" || type === "number" || type === "boolean") {
-    return constraints?.defaultValue ?? getPrimitiveFallback(type)
-  }
+  if (defaultValue !== undefined) return defaultValue
+  if (!type) return null
 
-  if (type === "object") {
-    return getObjectDefault(constraints)
-  }
-
-  if (type === "array") {
-    return getArrayDefault(constraints)
-  }
-
-  return null
+  return getPrimitiveFallback(type)
 }
 
-function getObjectDefault(constraints?: objectConstraintT | any): any {
-  if (constraints?.defaultValue !== undefined) {
-    return constraints.defaultValue
+function getDefaultForConstraintLeaf(constraints: ConstraintLeafT): any {
+  switch (constraints.type) {
+    case "string":
+      return constraints.constraints?.minLength ?? ""
+    case "number":
+      return constraints.constraints?.min ?? 0
+    case "boolean":
+      return false
+    case "array":
+      return getArrayDefault(constraints.constraints)
+    case "object":
+      return getObjectDefault(constraints.constraints)
+    default:
+      return null
+  }
+}
+
+function getObjectDefault(constraints?: objectConstraintT): any {
+  if (!constraints) {
+    return {}
   }
 
-  if (!constraints?.constraints || typeof constraints.constraints !== "object") {
-    return {}
+  if ('type' in constraints) {
+    return getDefaultForConstraintLeaf(constraints as ConstraintLeafT)
   }
 
   const obj: Record<string, any> = {}
 
-  for (const key in constraints.constraints) {
-    const field = constraints.constraints[key]
-
-    if (!field) continue
-
-    if (field.type === "string" || field.type === "number" || field.type === "boolean") {
-      obj[key] = field.constraints?.defaultValue ?? getPrimitiveFallback(field.type)
-    }
-
-    else if (field.type === "object") {
-      obj[key] = getObjectDefault(field)
-    }
-
-    else if (field.type === "array") {
-      obj[key] = getArrayDefault(field)
+  for (const key in constraints) {
+    const field = constraints[key]
+    if (field) {
+      obj[key] = getDefaultForConstraintLeaf(field)
     }
   }
 
   return obj
 }
 
-function getArrayDefault(constraints?: any): any[] {
+function getArrayDefault(constraints?: arrayConstraintT): any[] {
   if (constraints?.defaultValue !== undefined) {
     return constraints.defaultValue
   }
 
-  if (!constraints?.constraints) return []
-
-  const single = constraints.constraints
-
-  if (single.type === "string" || single.type === "number" || single.type === "boolean") {
-    return [single.constraints?.defaultValue ?? getPrimitiveFallback(single.type)]
+  if (!constraints?.template) {
+    const minItems = constraints?.min ?? 0
+    return Array(minItems).fill("")
   }
 
-  if (single.type === "object") {
-    return [getObjectDefault(single)]
-  }
+  const minItems = constraints.min ?? 0
+  const defaultItem = getDefaultForConstraintLeaf(constraints.template)
 
-  return []
+  return Array(minItems).fill(null).map(() =>
+    typeof defaultItem === "object" ? { ...defaultItem } : defaultItem
+  )
 }
 
 export function getDefaultValues(params: paramT[]) {
@@ -89,21 +84,110 @@ export function getDefaultValues(params: paramT[]) {
   return result
 }
 
-export const getDefaultValueByConstraints = (constraints?: objectConstraintT | arrayConstraintT) => {
+export const getDefaultValueByConstraints = (constraints?: ConstraintLeafT | arrayConstraintT) => {
   if (!constraints) return ""
 
-  switch (constraints.type) {
-    case "string":
-      return constraints.constraints?.defaultValue || ""
-    case "number":
-      return constraints.constraints?.defaultValue || 0
-    case "boolean":
-      return constraints.constraints?.defaultValue || false
-    case "array":
-      return constraints.constraints?.defaultValue || []
-    case "object":
-      return constraints.constraints?.defaultValue || {}
-    default:
-      return ""
+  if ('type' in constraints) {
+    return getDefaultForConstraintLeaf(constraints)
   }
+
+  return getArrayDefault(constraints)
+}
+
+function mergeArrayConstraints(oldC?: arrayConstraintT, newC?: arrayConstraintT): arrayConstraintT | undefined {
+  if (!oldC && !newC) return undefined
+  if (!oldC) return newC
+  if (!newC) return oldC
+
+  return {
+    ...oldC,
+    ...newC,
+    template: newC.template ?? oldC.template,
+    byIndex: {
+      ...oldC.byIndex,
+      ...newC.byIndex,
+    },
+  }
+}
+
+function mergeObjectConstraints(oldC?: objectConstraintT, newC?: objectConstraintT): objectConstraintT | undefined {
+  if (!oldC && !newC) return undefined
+  if (!oldC) return newC
+  if (!newC) return oldC
+
+  if ('type' in oldC || 'type' in newC) {
+    return newC
+  }
+
+  return {
+    ...oldC,
+    ...newC,
+  }
+}
+
+export function mergeParams(params: paramT[] = [], newParams: paramT[] = []): paramT[] {
+  return params.map((oldParam) => {
+    const updated = newParams.find((p) => p.name === oldParam.name)
+    if (!updated) return oldParam
+
+    if (oldParam.type !== updated.type) {
+      return updated
+    }
+
+    if (oldParam.type === "array" && updated.type === "array") {
+      return {
+        ...oldParam,
+        ...updated,
+        constraints: mergeArrayConstraints(
+          oldParam.constraints,
+          updated.constraints
+        ),
+      }
+    }
+
+    if (oldParam.type === "object" && updated.type === "object") {
+      return {
+        ...oldParam,
+        ...updated,
+        constraints: mergeObjectConstraints(
+          oldParam.constraints,
+          updated.constraints
+        ),
+      }
+    }
+
+    if (oldParam.type === "string" && updated.type === "string") {
+      return {
+        ...oldParam,
+        ...updated,
+        constraints: {
+          ...oldParam.constraints,
+          ...updated.constraints,
+        },
+      }
+    }
+
+    if (oldParam.type === "number" && updated.type === "number") {
+      return {
+        ...oldParam,
+        ...updated,
+        constraints: {
+          ...oldParam.constraints,
+          ...updated.constraints,
+        },
+      }
+    }
+
+    if (oldParam.type === "boolean" && updated.type === "boolean") {
+      return {
+        ...oldParam,
+        ...updated,
+      }
+    }
+
+    return {
+      ...oldParam,
+      ...updated,
+    }
+  }) as any
 }

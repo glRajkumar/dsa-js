@@ -14,48 +14,49 @@ export const Route = createFileRoute('/test-ui')({
 
 const paramsData: paramT[] = [
   {
+    name: "noConstraints",
+    description: "somedescription",
+  },
+  {
     name: "name",
     type: "string",
     description: "somedescription",
+    defaultValue: "somedescription",
     constraints: {
       minLength: 1,
       maxLength: 10,
-      defaultValue: "somevalue",
     },
   },
   {
     name: "age",
     type: "number",
     description: "somedescription",
+    defaultValue: 5,
     constraints: {
       min: 1,
       max: 10,
       step: 1,
-      defaultValue: 5,
     },
   },
   {
     name: "isMarried",
     type: "boolean",
     description: "somedescription",
-    constraints: {
-      defaultValue: false,
-    },
+    defaultValue: false,
   },
   {
     name: "objString",
     type: "object",
     description: "somedescription",
+    defaultValue: {
+      x: 799,
+      y: "hjhjjk",
+    },
     constraints: {
       type: "string",
       constraints: {
         minLength: 1,
         maxLength: 10,
-        defaultValue: "somevalue",
-      },
-      defaultValue: {
-        x: "jfhh",
-        y: "hjhjjk",
       }
     },
   },
@@ -63,39 +64,48 @@ const paramsData: paramT[] = [
     name: "objNumber",
     type: "object",
     description: "somedescription",
+    defaultValue: {
+      x: 6,
+      y: 5,
+    },
     constraints: {
       type: "number",
       constraints: {
         min: 1,
         max: 10,
         step: 1,
-        defaultValue: 5,
       },
-      defaultValue: {
-        x: 6,
-        y: 5,
-      }
     },
   },
   {
     name: "objBoolean",
     type: "object",
     description: "somedescription",
+    defaultValue: {
+      x: true,
+      y: false,
+    },
     constraints: {
       type: "boolean",
-      constraints: {
-        defaultValue: true,
-      },
-      defaultValue: {
-        x: true,
-        y: false,
-      }
     },
   },
   {
     name: "objObject",
     type: "object",
     description: "somedescription",
+    defaultValue: {
+      inner1: "somevalue",
+      inner2: 5,
+      inner3: true,
+      inner4: {
+        i4i1: "somevalue",
+        i4i2: 5,
+        i4i3: true,
+        i4i4: {
+          x: "jghk"
+        }
+      }
+    },
     constraints: {
       type: "object",
       constraints: {
@@ -104,7 +114,6 @@ const paramsData: paramT[] = [
           constraints: {
             minLength: 1,
             maxLength: 10,
-            defaultValue: "somevalue",
           },
         },
         inner2: {
@@ -113,14 +122,10 @@ const paramsData: paramT[] = [
             min: 1,
             max: 10,
             step: 1,
-            defaultValue: 5,
           },
         },
         inner3: {
           type: "boolean",
-          constraints: {
-            defaultValue: true,
-          },
         },
         inner4: {
           type: "object",
@@ -130,7 +135,6 @@ const paramsData: paramT[] = [
               constraints: {
                 minLength: 1,
                 maxLength: 10,
-                defaultValue: "somevalue",
               },
             },
             i4i2: {
@@ -138,47 +142,21 @@ const paramsData: paramT[] = [
               constraints: {
                 min: 1,
                 max: 10,
-                defaultValue: 5,
               },
             },
             i4i3: {
               type: "boolean",
-              constraints: {
-                defaultValue: false,
-              },
             },
             i4i4: {
               type: "object",
               constraints: {
                 i4i4i1: {
                   type: "string",
-                  defaultValue: {
-                    x: "jkj"
-                  }
                 }
               },
             },
           },
         },
-      },
-      defaultValue: {
-        obj1: {
-          inner1: "ghk",
-          inner2: 3,
-          inner3: true,
-          inner4: {
-            obj1: {
-              i4i1: "gjhk",
-              i4i2: 2,
-              i4i3: false,
-              i4i4: {
-                x: "yhtg",
-                y: "nidh",
-                z: "iksh"
-              }
-            }
-          }
-        }
       }
     },
   },
@@ -186,152 +164,138 @@ const paramsData: paramT[] = [
     name: "objNoConstraint",
     type: "object",
     description: "somedescription",
-    constraints: {
-      type: "object",
-      defaultValue: {
-        obj1: {
-          x: "somevalue",
-          y: true,
-          z: 6,
-        }
-      }
-    }
+    defaultValue: {
+      x: "somevalue",
+      y: true,
+      z: 6,
+    },
   },
   {
     name: "arrString",
     type: "array",
     description: "somedescription",
+    defaultValue: ["jfhh", "hjhjjk"],
     constraints: {
-      type: "string",
-      constraints: {
-        minLength: 1,
-        maxLength: 10,
-        defaultValue: "somevalue",
-      },
-      defaultValue: ["jfhh", "hjhjjk"]
+      // template:{
+      //   type: "string",
+      //   constraints: {
+      //     maxLength: 10,
+      //     minLength: 1,
+      //   }
+      // },
+      byIndex: {
+        0: { type: "string", constraints: { minLength: 2 } },
+        1: { type: "string", constraints: { maxLength: 10 } },
+      }
     },
   },
   {
     name: "arrNumber",
     type: "array",
     description: "somedescription",
+    defaultValue: [6, 5],
     constraints: {
-      type: "number",
-      constraints: {
-        min: 1,
-        max: 10,
-        step: 1,
-        defaultValue: 5,
-      },
-      defaultValue: [6, 5]
+      template: {
+        type: "number",
+        constraints: {
+          min: 1,
+          max: 10,
+          step: 1,
+        },
+      }
     },
   },
   {
     name: "arrBoolean",
     type: "array",
     description: "somedescription",
+    defaultValue: [true, false],
     constraints: {
-      type: "boolean",
-      constraints: {
-        defaultValue: true,
-      },
-      defaultValue: [true, false]
+      template: {
+        type: "boolean"
+      }
     },
   },
   {
     name: "arrObject",
     type: "array",
     description: "somedescription",
-    constraints: {
-      type: "object",
-      constraints: {
-        inner1: {
-          type: "string",
-          constraints: {
-            minLength: 1,
-            maxLength: 10,
-            defaultValue: "somevalue",
-          },
-        },
-        inner2: {
-          type: "number",
-          constraints: {
-            min: 1,
-            max: 10,
-            step: 1,
-            defaultValue: 5,
-          },
-        },
-        inner3: {
-          type: "boolean",
-          constraints: {
-            defaultValue: true,
-          },
-        },
-        inner4: {
-          type: "object",
-          constraints: {
-            i4i1: {
-              type: "string",
-              constraints: {
-                minLength: 1,
-                maxLength: 10,
-                defaultValue: "somevalue",
-              },
-            },
-            i4i2: {
-              type: "number",
-              constraints: {
-                min: 1,
-                max: 10,
-                defaultValue: 5,
-              },
-            },
-            i4i3: {
-              type: "boolean",
-              constraints: {
-                defaultValue: false,
-              },
-            },
-            i4i4: {
-              type: "object",
-              constraints: {
-                i4i4i1: {
-                  type: "string",
-                  defaultValue: {
-                    x: "jkj"
-                  }
-                }
-              },
-            },
-          },
-        },
-      },
-      defaultValue: [{
-        inner1: "ghk",
-        inner2: 3,
-        inner3: true,
-        inner4: {
-          i4i1: "gjhk",
-          i4i2: 2,
-          i4i3: false,
-          i4i4: {
-            x: "yhtg",
-            y: "nidh",
-            z: "iksh"
-          }
+    defaultValue: [{
+      inner1: "ghk",
+      inner2: 3,
+      inner3: true,
+      inner4: {
+        i4i1: "gjhk",
+        i4i2: 2,
+        i4i3: false,
+        i4i4: {
+          x: "yhtg",
+          y: "nidh",
+          z: "iksh"
         }
-      }]
+      }
+    }],
+    constraints: {
+      template: {
+        type: "object",
+        constraints: {
+          inner1: {
+            type: "string",
+            constraints: {
+              minLength: 1,
+              maxLength: 10,
+            },
+          },
+          inner2: {
+            type: "number",
+            constraints: {
+              min: 1,
+              max: 10,
+              step: 1,
+            },
+          },
+          inner3: {
+            type: "boolean",
+          },
+          inner4: {
+            type: "object",
+            constraints: {
+              i4i1: {
+                type: "string",
+                constraints: {
+                  minLength: 1,
+                  maxLength: 10,
+                },
+              },
+              i4i2: {
+                type: "number",
+                constraints: {
+                  min: 1,
+                  max: 10,
+                },
+              },
+              i4i3: {
+                type: "boolean",
+              },
+              i4i4: {
+                type: "object",
+                constraints: {
+                  i4i4i1: {
+                    type: "string"
+                  }
+                },
+              },
+            },
+          },
+        },
+      }
     },
   },
   {
     name: "arrNoConstraint",
     type: "array",
     description: "somedescription",
-    constraints: {
-      type: "array",
-      defaultValue: [1, "db", true]
-    }
+    defaultValue: [1, "db", true],
   },
 ]
 

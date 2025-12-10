@@ -6,6 +6,7 @@ import type {
   paramT,
   arrayConstraintT,
   objectConstraintT,
+  ConstraintLeafT,
   stringConstraintT,
   numberConstraintT,
 } from "@/utils/code-executer/schema"
@@ -14,10 +15,13 @@ import { getDefaultValueByConstraints } from "@/utils/code-executer/get-default"
 import { cn } from "@/lib/utils"
 
 import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/shadcn-ui/card"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/shadcn-ui/select"
 import { InputWrapper, SwitchWrapper } from "@/components/shadcn-ui/field-wrapper-rhf"
+import { Textarea } from "@/components/shadcn-ui/textarea"
 import { Button } from "@/components/shadcn-ui/button"
 import { Badge } from "@/components/shadcn-ui/badge"
 import { Input } from "@/components/shadcn-ui/input"
+import { Label } from "@/components/shadcn-ui/label"
 
 interface ParamFieldProps<T extends FieldValues> {
   param: paramT
@@ -25,6 +29,16 @@ interface ParamFieldProps<T extends FieldValues> {
 }
 
 export function ParamField<T extends FieldValues>({ param, name }: ParamFieldProps<T>) {
+  if (!param.type) {
+    return (
+      <DynamicTypeField
+        name={name}
+        label={param.name}
+        description={param.description}
+      />
+    )
+  }
+
   switch (param.type) {
     case "array":
       return (
@@ -71,10 +85,120 @@ export function ParamField<T extends FieldValues>({ param, name }: ParamFieldPro
           name={name}
           label={param.name}
           description={param.description}
-          constraints={param.constraints}
+          constraints={param?.constraints}
         />
       )
   }
+}
+
+interface DynamicTypeFieldProps<T extends FieldValues> {
+  name: Path<T>
+  label: string
+  description?: string
+}
+
+function DynamicTypeField<T extends FieldValues>({
+  name,
+  label,
+  description,
+}: DynamicTypeFieldProps<T>) {
+  const { setValue, watch } = useFormContext<T>()
+  const [selectedType, setSelectedType] = useState<string>("string")
+  const currentValue = watch(name)
+
+  const handleTypeChange = (newType: string) => {
+    setSelectedType(newType)
+    switch (newType) {
+      case "boolean":
+        setValue(name, false as any)
+        break
+      case "number":
+        setValue(name, 0 as any)
+        break
+      case "array":
+        setValue(name, [] as any)
+        break
+      case "object":
+        setValue(name, {} as any)
+        break
+      default:
+        setValue(name, "" as any)
+    }
+  }
+
+  const handleJsonChange = (value: string) => {
+    try {
+      const parsed = JSON.parse(value)
+      setValue(name, parsed as any)
+    } catch (e) {
+      // Invalid JSON, don't update
+      console.log(e)
+    }
+  }
+
+  return (
+    <div className="space-y-2">
+      <Label>{label}</Label>
+      {description && (
+        <p className="text-sm text-muted-foreground">{description}</p>
+      )}
+
+      <Select value={selectedType} onValueChange={handleTypeChange}>
+        <SelectTrigger>
+          <SelectValue placeholder="Select type" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="string">String</SelectItem>
+          <SelectItem value="number">Number</SelectItem>
+          <SelectItem value="boolean">Boolean</SelectItem>
+          <SelectItem value="array">Array</SelectItem>
+          <SelectItem value="object">Object</SelectItem>
+        </SelectContent>
+      </Select>
+
+      {selectedType === "string" && (
+        <Input
+          value={(currentValue as string) || ""}
+          onChange={(e) => setValue(name, e.target.value as any)}
+          placeholder="Enter string value"
+        />
+      )}
+
+      {selectedType === "number" && (
+        <Input
+          type="number"
+          value={(currentValue as number) || 0}
+          onChange={(e) => setValue(name, Number(e.target.value) as any)}
+          placeholder="Enter number"
+        />
+      )}
+
+      {selectedType === "boolean" && (
+        <Select
+          value={String(currentValue)}
+          onValueChange={(v) => setValue(name, (v === "true") as any)}
+        >
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="true">True</SelectItem>
+            <SelectItem value="false">False</SelectItem>
+          </SelectContent>
+        </Select>
+      )}
+
+      {(selectedType === "array" || selectedType === "object") && (
+        <Textarea
+          value={JSON.stringify(currentValue, null, 2)}
+          onChange={(e) => handleJsonChange(e.target.value)}
+          placeholder={`Enter JSON ${selectedType}`}
+          className="font-mono text-sm"
+          rows={6}
+        />
+      )}
+    </div>
+  )
 }
 
 interface StringFieldProps<T extends FieldValues> {
@@ -88,7 +212,7 @@ function StringField<T extends FieldValues>({
   name,
   label,
   description,
-  constraints: { defaultValue, ...rest } = {},
+  constraints = {},
 }: StringFieldProps<T>) {
   const { control } = useFormContext<T>()
 
@@ -98,8 +222,8 @@ function StringField<T extends FieldValues>({
       label={label}
       control={control}
       description={description}
-      placeholder={defaultValue || `Enter ${label}`}
-      {...rest}
+      placeholder={`Enter ${label}`}
+      {...constraints}
     />
   )
 }
@@ -115,7 +239,7 @@ function NumberField<T extends FieldValues>({
   name,
   label,
   description,
-  constraints: { defaultValue, ...rest } = {},
+  constraints = {},
 }: NumberFieldProps<T>) {
   const { control } = useFormContext<T>()
 
@@ -126,8 +250,8 @@ function NumberField<T extends FieldValues>({
       label={label}
       control={control}
       description={description}
-      placeholder={defaultValue?.toString() || `Enter ${label}`}
-      {...rest}
+      placeholder={`Enter ${label}`}
+      {...constraints}
     />
   )
 }
@@ -159,7 +283,7 @@ function BooleanField<T extends FieldValues>({
 interface ArrayItemProps<T extends FieldValues> {
   itemName: Path<T>
   index: number
-  constraints?: arrayConstraintT
+  constraints?: ConstraintLeafT
   label?: string
 }
 
@@ -168,15 +292,12 @@ function ArrayItemRenderer<T extends FieldValues>({
   index,
   constraints,
 }: ArrayItemProps<T>) {
-  const { control } = useFormContext<T>()
-
   const label = `Item ${index + 1}`
 
   if (!constraints) {
     return (
-      <InputWrapper
+      <DynamicTypeField
         name={itemName}
-        control={control}
         label={label}
       />
     )
@@ -197,7 +318,7 @@ function ArrayItemRenderer<T extends FieldValues>({
         <ObjectField
           name={itemName}
           label={label}
-          constraints={constraints?.constraints?.[itemName]}
+          constraints={constraints.constraints}
         />
       )
 
@@ -248,6 +369,13 @@ function ArrayField<T extends FieldValues>({
     name: name as any,
   })
 
+  const handleAdd = () => {
+    const defaultVal = constraints?.template
+      ? getDefaultValueByConstraints(constraints.template)
+      : ""
+    append(defaultVal as any)
+  }
+
   return (
     <Card>
       <CardHeader>
@@ -255,7 +383,7 @@ function ArrayField<T extends FieldValues>({
           <CardTitle>{label}</CardTitle>
 
           <Badge variant="secondary" className="ml-2">
-            Array[{constraints?.type || "any"}]
+            Array{constraints?.template ? `[${constraints.template.type}]` : ""}
           </Badge>
 
           <Badge variant="outline" className="ml-1">
@@ -272,7 +400,7 @@ function ArrayField<T extends FieldValues>({
             size="sm"
             type="button"
             variant="outline"
-            onClick={() => append(getDefaultValueByConstraints(constraints) as any)}
+            onClick={handleAdd}
             disabled={constraints?.max !== undefined && fields.length >= constraints.max}
           >
             <Plus className="h-4 w-4" />
@@ -284,13 +412,21 @@ function ArrayField<T extends FieldValues>({
       <CardContent className="space-y-3">
         {fields.map((field, index) => {
           const itemName = `${name}.${index}` as Path<T>
+          const itemConstraint = constraints?.byIndex?.[index] || constraints?.template
+
           return (
-            <div key={field.id} className={cn("flex gap-2", constraints?.type === "boolean" ? "items-center" : "items-start")}>
+            <div
+              key={field.id}
+              className={cn(
+                "flex gap-2",
+                itemConstraint?.type === "boolean" ? "items-center" : "items-start"
+              )}
+            >
               <div className="flex-1">
                 <ArrayItemRenderer
                   index={index}
                   itemName={itemName}
-                  constraints={constraints}
+                  constraints={itemConstraint}
                 />
               </div>
 
@@ -303,7 +439,7 @@ function ArrayField<T extends FieldValues>({
                   constraints?.min !== undefined &&
                   fields.length <= constraints.min
                 }
-                className={cn(constraints?.type !== "boolean" && "mt-6")}
+                className={cn(itemConstraint?.type !== "boolean" && "mt-6")}
               >
                 <Trash className="h-4 w-4 text-destructive" />
               </Button>
@@ -318,7 +454,7 @@ function ArrayField<T extends FieldValues>({
 interface ObjectFieldRendererProps<T extends FieldValues> {
   label: string
   fieldName: Path<T>
-  constraints?: objectConstraintT
+  constraints?: ConstraintLeafT
 }
 
 function ObjectFieldRenderer<T extends FieldValues>({
@@ -326,13 +462,10 @@ function ObjectFieldRenderer<T extends FieldValues>({
   fieldName,
   constraints,
 }: ObjectFieldRendererProps<T>) {
-  const { control } = useFormContext<T>()
-
   if (!constraints) {
     return (
-      <InputWrapper
+      <DynamicTypeField
         name={fieldName}
-        control={control}
         label={label}
       />
     )
@@ -353,7 +486,7 @@ function ObjectFieldRenderer<T extends FieldValues>({
         <ObjectField
           name={fieldName}
           label={label}
-          constraints={constraints?.constraints?.[fieldName]}
+          constraints={constraints.constraints}
         />
       )
 
@@ -404,14 +537,21 @@ function ObjectField<T extends FieldValues>({
   const currentValue: any = watch(name) || {}
   const objectKeys = Object.keys(currentValue)
 
+  const isLeafConstraint = constraints && 'type' in constraints
+  const propertyConstraints = !isLeafConstraint ? constraints as Record<string, ConstraintLeafT> : undefined
+
   const handleAddKey = () => {
     if (!newKey.trim() || currentValue[newKey] !== undefined) {
       return
     }
 
+    const defaultVal = propertyConstraints?.[newKey]
+      ? getDefaultValueByConstraints(propertyConstraints[newKey])
+      : ""
+
     setValue(name, {
       ...currentValue,
-      [newKey]: getDefaultValueByConstraints(constraints),
+      [newKey]: defaultVal,
     } as any)
 
     setNewKey("")
@@ -469,33 +609,38 @@ function ObjectField<T extends FieldValues>({
       </CardHeader>
 
       <CardContent className="space-y-3">
-        {
-          objectKeys?.map((key) => {
-            const fieldName = `${name}.${key}` as Path<T>
+        {objectKeys?.map((key) => {
+          const fieldName = `${name}.${key}` as Path<T>
+          const keyConstraint = propertyConstraints?.[key]
 
-            return (
-              <div key={key} className={cn("flex gap-2", constraints?.type === "boolean" ? "items-center" : "items-start")}>
-                <div className="flex-1">
-                  <ObjectFieldRenderer
-                    label={key}
-                    fieldName={fieldName}
-                    constraints={constraints}
-                  />
-                </div>
-
-                <Button
-                  size="icon"
-                  type="button"
-                  variant="ghost"
-                  onClick={() => handleDeleteKey(key)}
-                  className={cn(constraints?.type !== "boolean" && "mt-6")}
-                >
-                  <Trash className="h-4 w-4 text-destructive" />
-                </Button>
+          return (
+            <div
+              key={key}
+              className={cn(
+                "flex gap-2",
+                keyConstraint?.type === "boolean" ? "items-center" : "items-start"
+              )}
+            >
+              <div className="flex-1">
+                <ObjectFieldRenderer
+                  label={key}
+                  fieldName={fieldName}
+                  constraints={keyConstraint}
+                />
               </div>
-            )
-          })
-        }
+
+              <Button
+                size="icon"
+                type="button"
+                variant="ghost"
+                onClick={() => handleDeleteKey(key)}
+                className={cn(keyConstraint?.type !== "boolean" && "mt-6")}
+              >
+                <Trash className="h-4 w-4 text-destructive" />
+              </Button>
+            </div>
+          )
+        })}
       </CardContent>
     </Card>
   )

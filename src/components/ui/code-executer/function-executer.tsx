@@ -22,10 +22,10 @@ type props = functionMetadataT & {
 }
 export function FunctionExecuter({ name, params, description, isAsync, prefix = "Function", onExecute = () => { } }: props) {
   const methods = useForm({
-    defaultValues: params?.reduce((prev: any, curr) => {
-      prev[curr.name] = curr.constraints?.defaultValue
-      return prev
-    }, {})
+    // defaultValues: params?.reduce((prev: any, curr) => {
+    //   prev[curr.name] = curr.constraints?.defaultValue
+    //   return prev
+    // }, {})
   })
 
   function handleSubmit(data: any) {
