@@ -25,23 +25,16 @@ export const NumberConstraintZ = z.object({
   min: z.number().optional(),
   max: z.number().optional(),
   step: z.number().optional(),
-  defaultValue: z.number().optional(),
 })
 
 export const StringConstraintZ = z.object({
   minLength: z.number().optional(),
   maxLength: z.number().optional(),
   pattern: z.string().optional(),
-  defaultValue: z.string().optional(),
-})
-
-export const BooleanConstraintZ = z.object({
-  defaultValue: z.boolean().optional(),
 })
 
 export type numberConstraintT = z.infer<typeof NumberConstraintZ>
 export type stringConstraintT = z.infer<typeof StringConstraintZ>
-export type booleanConstraintT = z.infer<typeof BooleanConstraintZ>
 
 export type arrayConstraintT = {
   min?: number
@@ -50,22 +43,26 @@ export type arrayConstraintT = {
 } & (
     | { type: "string"; constraints?: stringConstraintT; defaultValue?: string[] }
     | { type: "number"; constraints?: numberConstraintT; defaultValue?: number[] }
-    | { type: "boolean"; constraints?: booleanConstraintT; defaultValue?: boolean[] }
+    | { type: "boolean"; defaultValue?: boolean[] }
     | { type: "array"; constraints?: arrayConstraintT; defaultValue?: primOrArrOrObjT[] }
     | { type: "object"; constraints?: Record<string, objectConstraintT>; defaultValue?: Record<string, primOrArrOrObjT>[] }
   )
 
-export type objectConstraintT =
-  | { type: "string"; constraints?: stringConstraintT; defaultValue?: Record<string, string> }
-  | { type: "number"; constraints?: numberConstraintT; defaultValue?: Record<string, number> }
-  | { type: "boolean"; constraints?: booleanConstraintT; defaultValue?: Record<string, boolean> }
-  | { type: "array"; constraints?: arrayConstraintT; defaultValue?: Record<string, primOrArrOrObjT[]> }
-  | { type: "object"; constraints?: Record<string, objectConstraintT>; defaultValue?: Record<string, primOrArrOrObjT> }
+export type objectConstraintT = {
+  defaultValue?: Record<string, primOrArrOrObjT>
+} & (
+    | { type: "string"; constraints?: stringConstraintT; defaultValue?: Record<string, string> }
+    | { type: "number"; constraints?: numberConstraintT; defaultValue?: Record<string, number> }
+    | { type: "boolean"; defaultValue?: Record<string, boolean> }
+    | { type: "array"; constraints?: arrayConstraintT; defaultValue?: Record<string, primOrArrOrObjT[]> }
+    | { type: "object"; constraints?: Record<string, objectConstraintT>; defaultValue?: Record<string, primOrArrOrObjT> }
+  )
 
 const CommonArrayConstraintZ = z.object({
   min: z.number().optional(),
   max: z.number().optional(),
   canIncludeFalsy: z.boolean().optional(),
+  defaultValue: z.array(PrimOrArrOrObjZ).optional(),
 })
 
 export const ArrayConstraintZ: z.ZodType<arrayConstraintT> = z.discriminatedUnion("type", [
@@ -83,7 +80,6 @@ export const ArrayConstraintZ: z.ZodType<arrayConstraintT> = z.discriminatedUnio
 
   CommonArrayConstraintZ.extend({
     type: z.literal("boolean"),
-    constraints: BooleanConstraintZ.optional(),
     defaultValue: z.array(z.boolean()).optional(),
   }),
 
@@ -104,32 +100,35 @@ export const ArrayConstraintZ: z.ZodType<arrayConstraintT> = z.discriminatedUnio
   )
 ])
 
+const CommonObjectConstraintZ = z.object({
+  defaultValue: z.array(PrimOrArrOrObjZ).optional(),
+})
+
 export const ObjectConstraintZ: z.ZodType<objectConstraintT> = z.discriminatedUnion("type", [
-  z.object({
+  CommonObjectConstraintZ.extend({
     type: z.literal("string"),
     constraints: StringConstraintZ.optional(),
     defaultValue: z.record(z.string(), z.string()).optional(),
   }),
 
-  z.object({
+  CommonObjectConstraintZ.extend({
     type: z.literal("number"),
     constraints: NumberConstraintZ.optional(),
     defaultValue: z.record(z.string(), z.number()).optional(),
   }),
 
-  z.object({
+  CommonObjectConstraintZ.extend({
     type: z.literal("boolean"),
-    constraints: BooleanConstraintZ.optional(),
     defaultValue: z.record(z.string(), z.boolean()).optional(),
   }),
 
-  z.lazy(() => z.object({
+  z.lazy(() => CommonObjectConstraintZ.extend({
     type: z.literal("array"),
     constraints: z.lazy(() => ArrayConstraintZ).optional(),
     defaultValue: z.record(z.string(), z.array(PrimOrArrOrObjZ)).optional(),
   })),
 
-  z.lazy(() => z.object({
+  z.lazy(() => CommonObjectConstraintZ.extend({
     type: z.literal("object"),
     constraints: z.record(z.string(), z.lazy(() => ObjectConstraintZ)).optional(),
     defaultValue: z.record(z.string(), PrimOrArrOrObjZ).optional(),
@@ -144,24 +143,28 @@ const CommonParamZ = z.object({
 
 export const ParamZ = z.discriminatedUnion("type", [
   CommonParamZ.extend({
-    type: z.literal("string"),
+    type: z.literal("string").optional(),
     constraints: StringConstraintZ.optional(),
+    defaultValue: z.string().optional(),
   }),
   CommonParamZ.extend({
-    type: z.literal("number"),
+    type: z.literal("number").optional(),
     constraints: NumberConstraintZ.optional(),
+    defaultValue: z.number().optional(),
   }),
   CommonParamZ.extend({
-    type: z.literal("boolean"),
-    constraints: BooleanConstraintZ.optional(),
+    type: z.literal("boolean").optional(),
+    defaultValue: z.boolean().optional(),
   }),
   CommonParamZ.extend({
-    type: z.literal("array"),
+    type: z.literal("array").optional(),
     constraints: ArrayConstraintZ.optional(),
+    defaultValue: z.array(PrimOrArrOrObjZ).optional(),
   }),
   CommonParamZ.extend({
-    type: z.literal("object"),
+    type: z.literal("object").optional(),
     constraints: ObjectConstraintZ.optional(),
+    defaultValue: z.record(z.string(), PrimOrArrOrObjZ).optional(),
   }),
 ])
 
