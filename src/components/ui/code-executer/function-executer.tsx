@@ -1,6 +1,7 @@
 import { FormProvider, useForm } from 'react-hook-form'
 
 import type { functionMetadataT } from "@/utils/code-executer/schema"
+import { getDefaultValues } from '@/utils/code-executer/get-default'
 import { getFnOrCls } from "@/utils/code-executer/extractor"
 
 import {
@@ -22,10 +23,7 @@ type props = functionMetadataT & {
 }
 export function FunctionExecuter({ name, params, description, isAsync, prefix = "Function", onExecute = () => { } }: props) {
   const methods = useForm({
-    // defaultValues: params?.reduce((prev: any, curr) => {
-    //   prev[curr.name] = curr.constraints?.defaultValue
-    //   return prev
-    // }, {})
+    defaultValues: params ? getDefaultValues(params) : {}
   })
 
   function handleSubmit(data: any) {

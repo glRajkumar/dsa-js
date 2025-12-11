@@ -1,22 +1,7 @@
-import type { paramT, jsonMetaDataT, functionMetadataT, classMetadataT, testCaseT } from "./schema"
+import type { jsonMetaDataT, functionMetadataT, classMetadataT, testCaseT } from "./schema"
 import { extractMetadataFromFile } from "./extractor"
+import { mergeParams } from "./merger"
 import * as path from "path"
-
-function mergeParams(params: paramT[] = [], newParams: paramT[] = []): paramT[] {
-  return params.map((oldParam) => {
-    const updated = newParams.find((p) => p.name === oldParam.name && p.type === oldParam.type)
-    if (!updated) return oldParam
-
-    return {
-      ...oldParam,
-      ...updated,
-      constraints: {
-        ...oldParam.constraints,
-        ...updated.constraints,
-      },
-    } as paramT
-  })
-}
 
 type rt = Promise<{
   executers: (functionMetadataT | classMetadataT)[]
