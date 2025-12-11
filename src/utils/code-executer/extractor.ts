@@ -59,9 +59,17 @@ export function extractMetadataFromFile(filePath: string): fnOrClsArrT {
       node.modifiers?.some((m) => m.kind === ts.SyntaxKind.ExportKeyword)
     ) {
       const constructor = node.members.find(ts.isConstructorDeclaration)
-      const methods = node.members.filter(
-        (m) => ts.isMethodDeclaration(m) && !m.modifiers?.some((mod) => mod.kind === ts.SyntaxKind.PrivateKeyword),
-      )
+      const methods = node.members.filter(m => {
+        if (!ts.isMethodDeclaration(m)) return false
+
+        const hasPrivateModifier = m.modifiers?.some((mod) => mod.kind === ts.SyntaxKind.PrivateKeyword)
+        if (hasPrivateModifier) return false
+
+        const methodName = m.name?.getText(sourceFile) || ""
+        if (methodName.startsWith('_')) return false
+
+        return true
+      })
 
       items.push({
         type: "class",
@@ -83,7 +91,7 @@ export function extractMetadataFromFile(filePath: string): fnOrClsArrT {
   return items
 }
 
-export async function getFnOrCls(filePath: string, name: string): Promise<Function> { // | (new (...args: any[]) => any
+export async function getFnOrCls(filePath: string, name: string): Promise<Function> {
   const modules = import.meta.glob("/src/problems/**/*.ts")
   const module = await modules["/src" + filePath]()
   const fnOrCls = (module as any)[name]

@@ -180,10 +180,11 @@ export const JsonMetaDataZ = z.object({
 })
 
 export const LogZ = z.object({
+  id: z.string(),
   input: PrimOrArrOrObjZ,
   output: PrimOrArrOrObjZ,
+  name: z.string().optional(),
   error: z.string().optional(),
-  method: z.string().optional(),
 })
 
 export const FnOrClsArrZ = z.array(
@@ -198,3 +199,73 @@ export type jsonMetaDataT = z.infer<typeof JsonMetaDataZ>
 export type testCaseT = z.infer<typeof TestCaseZ>
 export type metaT = z.infer<typeof MetaZ>
 export type logT = z.infer<typeof LogZ>
+
+export function generateZodSchema(params: paramT[]) {
+  const shape: Record<string, z.ZodTypeAny> = {}
+
+  params.forEach(param => {
+    let schema: z.ZodTypeAny
+
+    switch (param.type) {
+      case "string": {
+        schema = z.string()
+        if (param.constraints?.minLength !== undefined) {
+          schema = (schema as z.ZodString).min(param.constraints.minLength,
+            `Minimum length is ${param.constraints.minLength}`)
+        }
+        if (param.constraints?.maxLength !== undefined) {
+          schema = (schema as z.ZodString).max(param.constraints.maxLength,
+            `Maximum length is ${param.constraints.maxLength}`)
+        }
+        if (param.constraints?.pattern) {
+          schema = (schema as z.ZodString).regex(new RegExp(param.constraints.pattern),
+            `Must match pattern: ${param.constraints.pattern}`)
+        }
+        break
+      }
+      case "number": {
+        schema = z.number()
+        if (param.constraints?.min !== undefined) {
+          schema = (schema as z.ZodNumber).min(param.constraints.min,
+            `Minimum value is ${param.constraints.min}`)
+        }
+        if (param.constraints?.max !== undefined) {
+          schema = (schema as z.ZodNumber).max(param.constraints.max,
+            `Maximum value is ${param.constraints.max}`)
+        }
+        break
+      }
+      case "boolean": {
+        schema = z.boolean()
+        break
+      }
+      case "array": {
+        schema = z.array(z.any())
+        if (param.constraints?.min !== undefined) {
+          schema = (schema as z.ZodArray<any>).min(param.constraints.min,
+            `Minimum ${param.constraints.min} items required`)
+        }
+        if (param.constraints?.max !== undefined) {
+          schema = (schema as z.ZodArray<any>).max(param.constraints.max,
+            `Maximum ${param.constraints.max} items allowed`)
+        }
+        break
+      }
+      case "object": {
+        schema = z.object(z.any())
+        break
+      }
+      default: {
+        schema = z.any()
+      }
+    }
+
+    if (param.required === false) {
+      schema = schema.optional()
+    }
+
+    shape[param.name] = schema
+  })
+
+  return z.object(shape)
+}

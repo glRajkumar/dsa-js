@@ -1,8 +1,12 @@
 import { FormProvider, useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { z } from 'zod'
 
-import type { functionMetadataT } from "@/utils/code-executer/schema"
+import { generateZodSchema, type functionMetadataT } from "@/utils/code-executer/schema"
 import { getDefaultValues } from '@/utils/code-executer/get-default'
 import { getFnOrCls } from "@/utils/code-executer/extractor"
+
+import { UseLogs } from './use-logs'
 
 import {
   Card,
@@ -16,18 +20,23 @@ import { Button } from "@/components/shadcn-ui/button"
 import { Badge } from "@/components/shadcn-ui/badge"
 
 import { ParamField } from "./params"
+import { Results } from './results'
 
 type props = functionMetadataT & {
   prefix?: string
   onExecute?: (args: any[]) => void
 }
 export function FunctionExecuter({ name, params, description, isAsync, prefix = "Function", onExecute = () => { } }: props) {
+  const hasParams = params && params.length > 0
+  const schema = hasParams ? generateZodSchema(params) : z.object({})
+
   const methods = useForm({
-    defaultValues: params ? getDefaultValues(params) : {}
+    resolver: zodResolver(schema as any),
+    defaultValues: hasParams ? getDefaultValues(params) : {}
   })
 
   function handleSubmit(data: any) {
-    console.log(data)
+    onExecute(hasParams ? params?.map(p => data[p?.name]) as any : [])
   }
 
   return (
@@ -48,7 +57,6 @@ export function FunctionExecuter({ name, params, description, isAsync, prefix = 
             size="sm"
             variant="secondary"
             className="border"
-            // onClick={() => onExecute(Object.values(values))}
             onClick={() => handleSubmit(methods.getValues())}
           >
             Execute
@@ -80,16 +88,38 @@ export function FunctionExecuter({ name, params, description, isAsync, prefix = 
 }
 
 export function FunctionExecuterWrapper({ filePath, ...rest }: Omit<props, "onExecute"> & { filePath: string }) {
+  const { logs, addLog, clearLogs } = UseLogs()
+
   const executeFunction = async (args: any[]) => {
-    const fn = await getFnOrCls(filePath, rest.name)
-    const result = fn(...args)
-    console.log(result)
+    try {
+      const fn = await getFnOrCls(filePath, rest.name)
+      const result = fn(...args)
+      console.log(result)
+      addLog({
+        input: args,
+        output: result
+      })
+
+    } catch (error) {
+      addLog({
+        input: args,
+        output: "",
+        error: JSON.stringify(error),
+      })
+    }
   }
 
   return (
-    <FunctionExecuter
-      {...rest}
-      onExecute={executeFunction}
-    />
+    <div className='grid grid-cols-2 gap-4'>
+      <FunctionExecuter
+        {...rest}
+        onExecute={executeFunction}
+      />
+
+      <Results
+        logs={logs}
+        onClear={clearLogs}
+      />
+    </div>
   )
 }

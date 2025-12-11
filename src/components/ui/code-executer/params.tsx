@@ -281,7 +281,7 @@ function DynamicTypeField<T extends FieldValues>({
       {(selectedType === "Array" || selectedType === "Object") && (
         <Textarea
           id={name}
-          value={JSON.stringify(currentValue, null, 2)}
+          value={currentValue}
           onChange={(e) => handleJsonChange(e.target.value)}
           placeholder={`Enter JSON ${selectedType}`}
           rows={6}
