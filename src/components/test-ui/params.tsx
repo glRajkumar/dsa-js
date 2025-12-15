@@ -41,6 +41,14 @@ function Params() {
       defaultValue: false,
     },
     {
+      name: "enum",
+      type: "enum",
+      description: "Enum with string, boolean, number",
+      constraints: {
+        values: ["Option 1", 2, true]
+      }
+    },
+    {
       name: "objString",
       type: "object",
       description: "object whose values are strings",
@@ -115,96 +123,91 @@ function Params() {
         },
       },
       constraints: {
-        template: {
-          type: "object",
-          constraints: {
-            by: {
-              level1A: {
-                type: "string",
-                constraints: {
-                  minLength: 1,
-                  maxLength: 15,
-                },
-              },
-              level1B: {
-                type: "number",
-                constraints: {
-                  min: 1,
-                  max: 100,
-                },
-              },
-              level1C: {
-                type: "object",
-                constraints: {
-                  by: {
-                    level2A: {
-                      type: "string",
-                      constraints: {
-                        minLength: 2,
-                        maxLength: 20,
-                      },
-                    },
-                    level2B: {
-                      type: "object",
-                      constraints: {
-                        by: {
-                          level3A: {
-                            type: "number",
-                            constraints: {
-                              min: 0,
-                              max: 10,
-                            },
-                          },
-                          level3B: {
-                            type: "boolean",
-                          },
-                          level3C: {
-                            type: "object",
-                            constraints: {
-                              by: {
-                                level4A: {
-                                  type: "string",
-                                  constraints: {
-                                    minLength: 3,
-                                    maxLength: 30,
-                                  },
-                                },
-                                level4B: {
-                                  type: "object",
-                                  constraints: {
-                                    by: {
-                                      level5A: {
-                                        type: "string",
-                                        constraints: {
-                                          minLength: 1,
-                                          maxLength: 50,
-                                        },
-                                      },
-                                      level5B: {
-                                        type: "number",
-                                        constraints: {
-                                          min: 1,
-                                          max: 999,
-                                        },
-                                      },
-                                      level5C: {
-                                        type: "boolean",
-                                      },
-                                    }
-                                  },
-                                },
-                              }
-                            },
-                          },
-                        }
-                      },
-                    },
-                  }
-                },
-              },
-            }
+        by: {
+          level1A: {
+            type: "string",
+            constraints: {
+              minLength: 1,
+              maxLength: 15,
+            },
           },
-        }
+          level1B: {
+            type: "number",
+            constraints: {
+              min: 1,
+              max: 100,
+            },
+          },
+          level1C: {
+            type: "object",
+            constraints: {
+              by: {
+                level2A: {
+                  type: "string",
+                  constraints: {
+                    minLength: 2,
+                    maxLength: 20,
+                  },
+                },
+                level2B: {
+                  type: "object",
+                  constraints: {
+                    by: {
+                      level3A: {
+                        type: "number",
+                        constraints: {
+                          min: 0,
+                          max: 10,
+                        },
+                      },
+                      level3B: {
+                        type: "boolean",
+                      },
+                      level3C: {
+                        type: "object",
+                        constraints: {
+                          by: {
+                            level4A: {
+                              type: "string",
+                              constraints: {
+                                minLength: 3,
+                                maxLength: 30,
+                              },
+                            },
+                            level4B: {
+                              type: "object",
+                              constraints: {
+                                by: {
+                                  level5A: {
+                                    type: "string",
+                                    constraints: {
+                                      minLength: 1,
+                                      maxLength: 50,
+                                    },
+                                  },
+                                  level5B: {
+                                    type: "number",
+                                    constraints: {
+                                      min: 1,
+                                      max: 999,
+                                    },
+                                  },
+                                  level5C: {
+                                    type: "boolean",
+                                  },
+                                }
+                              },
+                            },
+                          }
+                        },
+                      },
+                    }
+                  },
+                },
+              }
+            },
+          },
+        },
       },
     },
     {
@@ -426,7 +429,7 @@ function Params() {
       name: "arrNoConstraint",
       type: "array",
       description: "array with mixed types and no constraints",
-      defaultValue: [1, "text", false, { x: 1 }],
+      defaultValue: [1, "text", "false", { x: 1 }], // problem in react hook form
     },
     {
       name: "skills",

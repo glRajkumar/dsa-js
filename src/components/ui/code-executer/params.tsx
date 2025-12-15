@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useMemo, useState } from "react"
 import { FieldValues, Path, useFieldArray, useFormContext } from "react-hook-form"
 import { Plus, Trash } from "lucide-react"
 
@@ -17,7 +17,7 @@ import { cn } from "@/lib/utils"
 
 import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/shadcn-ui/card"
 import { InputWrapper, SwitchWrapper, SelectWrapper as EnumSelectWrapper } from "@/components/shadcn-ui/field-wrapper-rhf"
-import { Field, FieldDescription, FieldLabel } from "@/components/shadcn-ui/field"
+import { Field, FieldDescription, FieldError, FieldLabel } from "@/components/shadcn-ui/field"
 import { SelectWrapper } from "@/components/shadcn-ui/select"
 import { Textarea } from "@/components/shadcn-ui/textarea"
 import { Button } from "@/components/shadcn-ui/button"
@@ -25,24 +25,10 @@ import { Switch } from "@/components/shadcn-ui/switch"
 import { Badge } from "@/components/shadcn-ui/badge"
 import { Input } from "@/components/shadcn-ui/input"
 
-type ObjectConstraintMap = Record<string, ConstraintLeafT>
-
 function isConstraintLeaf(
   c: objectConstraintT | ConstraintLeafT | undefined,
 ): c is ConstraintLeafT {
   return !!c && typeof c === "object" && "type" in c
-}
-
-function isObjectConstraintMap(
-  c: objectConstraintT | ConstraintLeafT | undefined,
-): c is ObjectConstraintMap {
-  return !!c && typeof c === "object" && !("type" in c)
-}
-
-function isObjectLeaf(
-  c: ConstraintLeafT | undefined,
-): c is Extract<ConstraintLeafT, { type: "object" }> {
-  return !!c && c.type === "object"
 }
 
 function isObjectConstraint(
@@ -116,11 +102,11 @@ export function ParamField<T extends FieldValues>({ param, name }: ParamFieldPro
   )
 }
 
-function ObjTextField({ name, type }: { name: string, type: string }) {
-  const [val, setVal] = useState("")
-
-  const { setValue, setError, watch } = useFormContext()
+function ObjTextField({ name, type, isInvalid }: { name: string, type: string, isInvalid: boolean }) {
+  const { clearErrors, setValue, setError, watch } = useFormContext()
   const oldVal = watch(name)
+
+  const [val, setVal] = useState(oldVal ? JSON.stringify(oldVal, null, 2) : "")
 
   function getVal() {
     try {
@@ -133,11 +119,14 @@ function ObjTextField({ name, type }: { name: string, type: string }) {
   }
 
   function onBlur() {
+    if (!val) return
     try {
       const value = JSON.parse(val)
       setValue(name, value)
+      clearErrors(name)
+
     } catch (error) {
-      setError(name, { message: `Error on ${type}` }, { shouldFocus: true })
+      setError(name, { message: `Error on ${type}`, type: "custom" }, { shouldFocus: true })
     }
   }
 
@@ -149,6 +138,7 @@ function ObjTextField({ name, type }: { name: string, type: string }) {
       onBlur={onBlur}
       onChange={e => setVal(e.target.value)}
       placeholder={`Enter JSON ${type}`}
+      aria-invalid={isInvalid}
     />
   )
 }
@@ -246,14 +236,28 @@ interface DynamicTypeFieldProps<T extends FieldValues> {
   description?: string
 }
 
+function getDefaultType(val: any) {
+  if (typeof val === "object") {
+    if (val === null) return "String"
+    if (Array.isArray(val)) return "Array"
+    return "Object"
+  }
+
+  if (typeof val === "boolean") return "Boolean"
+  if (typeof val === "number") return "Number"
+  return "String"
+}
+
 function DynamicTypeField<T extends FieldValues>({
   name,
   label,
   description,
 }: DynamicTypeFieldProps<T>) {
-  const { setValue, watch } = useFormContext<T>()
-  const [selectedType, setSelectedType] = useState("String")
+  const { formState: { errors }, setValue, watch } = useFormContext<T>()
   const currentValue = watch(name)
+
+  const [selectedType, setSelectedType] = useState(getDefaultType(currentValue))
+  const isInvalid = !!errors?.[name]
 
   const handleTypeChange = (newType: string) => {
     setSelectedType(newType)
@@ -276,7 +280,7 @@ function DynamicTypeField<T extends FieldValues>({
   }
 
   return (
-    <Field>
+    <Field data-invalid={isInvalid}>
       {label && <FieldLabel htmlFor={name}>{label}</FieldLabel>}
 
       <SelectWrapper
@@ -323,10 +327,12 @@ function DynamicTypeField<T extends FieldValues>({
         <ObjTextField
           name={name}
           type={selectedType}
+          isInvalid={isInvalid}
         />
       )}
 
       {description && <FieldDescription>{description}</FieldDescription>}
+      {isInvalid && <FieldError errors={[{ message: errors?.[name]?.message as string }]} />}
     </Field>
   )
 }
@@ -512,8 +518,7 @@ function ArrayField<T extends FieldValues>({
           const itemName = `${name}.${index}` as Path<T>
           const itemConstraint: any = constraints?.by?.[index] || constraints?.template
           const isPredefined = isPredefinedConstraint(constraints, index)
-          const canDelete = !isPredefined &&
-            (constraints?.min === undefined || fields.length > constraints.min)
+          const canDelete = !isPredefined && (constraints?.min === undefined || fields.length > constraints.min)
 
           return (
             <div
@@ -576,61 +581,33 @@ function ObjectField<T extends FieldValues>({
   const currentValue: Record<string, unknown> = (watch(name) as any) ?? {}
   const objectKeys = Object.keys(currentValue)
 
-  const constraintKeys = new Set<string>()
-  let templateConstraint: ConstraintLeafT | undefined
-  let byConstraints: Record<string, ConstraintLeafT> = {}
-
-  if (constraints) {
-    if (isObjectConstraint(constraints)) {
-      if (constraints.template) {
-        templateConstraint = constraints.template
+  const list = useMemo(() => {
+    return Object.keys(currentValue).map(k => {
+      let root = constraints?.by?.[k] || constraints?.template
+      if (root?.type === "object" && root?.constraints && (root?.constraints?.by?.[k] || root?.constraints?.template)) {
+        root = root?.constraints?.by?.[k] || root?.constraints?.template
       }
-      if (constraints.by) {
-        byConstraints = constraints.by
-        Object.keys(byConstraints).forEach(k => constraintKeys.add(k))
+      return {
+        name: `${name}.${k}`,
+        label: k,
+        ...(root)
+      } as {
+        name: string
+        label: string
+        description?: string
+        type?: string
+        constraints?: ConstraintLeafT
       }
-    } else if (isObjectConstraintMap(constraints)) {
-      Object.keys(constraints).forEach(k => {
-        constraintKeys.add(k)
-        byConstraints[k] = constraints[k]
-      })
-    } else if (isConstraintLeaf(constraints) && (constraints as any).type === "object" && (constraints as any).constraints) {
-      const innerConstraints = (constraints as any).constraints
-      if (typeof innerConstraints === "object") {
-        if ('by' in innerConstraints && innerConstraints.by) {
-          byConstraints = innerConstraints.by
-          Object.keys(byConstraints).forEach(k => constraintKeys.add(k))
-        }
-        if ('template' in innerConstraints && innerConstraints.template) {
-          templateConstraint = innerConstraints.template
-        }
-      }
-    }
-  }
+    })
+  }, [currentValue, constraints])
 
   const handleAddKey = () => {
     const key = newKey.trim()
     if (!key || currentValue[key] !== undefined) return
-
-    if (byConstraints && byConstraints[key]) {
-      setValue(name, {
-        ...currentValue,
-        [key]: getDefaultValueByConstraints(byConstraints[key])
-      } as any)
-    }
-    else if (templateConstraint) {
-      setValue(name, {
-        ...currentValue,
-        [key]: getDefaultValueByConstraints(templateConstraint)
-      } as any)
-    }
-    else {
-      setValue(name, {
-        ...currentValue,
-        [key]: ""
-      } as any)
-    }
-
+    setValue(name, {
+      ...currentValue,
+      [newKey]: ""
+    } as any)
     setNewKey("")
   }
 
@@ -639,8 +616,6 @@ function ObjectField<T extends FieldValues>({
     delete newVal[key]
     setValue(name, newVal as any)
   }
-
-  const isReadOnly = isObjectConstraint(constraints) && !templateConstraint && Object.keys(byConstraints).length > 0
 
   return (
     <Card>
@@ -655,107 +630,58 @@ function ObjectField<T extends FieldValues>({
           <CardDescription>{description}</CardDescription>
         )}
 
-        {!isReadOnly && (
-          <CardAction>
-            <div className="flex gap-2">
-              <Input
-                value={newKey}
-                onChange={e => setNewKey(e.target.value)}
-                placeholder="Key name"
-                className="h-9"
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault()
-                    handleAddKey()
-                  }
-                }}
-              />
-              <Button
-                size="sm"
-                type="button"
-                variant="outline"
-                onClick={handleAddKey}
-                disabled={!newKey.trim() || currentValue[newKey.trim()] !== undefined}
-              >
-                <Plus className="h-4 w-4" />
-                Add
-              </Button>
-            </div>
-          </CardAction>
-        )}
+        <CardAction>
+          <div className="flex gap-2">
+            <Input
+              value={newKey}
+              onChange={e => setNewKey(e.target.value)}
+              placeholder="Key name"
+              className="h-9"
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault()
+                  handleAddKey()
+                }
+              }}
+            />
+            <Button
+              size="sm"
+              type="button"
+              variant="outline"
+              onClick={handleAddKey}
+              disabled={!newKey.trim() || currentValue[newKey.trim()] !== undefined}
+            >
+              <Plus className="h-4 w-4" />
+              Add
+            </Button>
+          </div>
+        </CardAction>
       </CardHeader>
 
       <CardContent className="space-y-3">
-        {objectKeys.map((key) => {
-          const fieldName = `${name}.${key}` as Path<T>
-          const parentPath = name as string
-          const fieldNameStr = fieldName as string
-
-          fieldNameStr.startsWith(parentPath + ".")
-            ? fieldNameStr.slice(parentPath.length + 1)
-            : fieldNameStr
-
-          let keyConstraint: any = byConstraints[key]
-          if (!keyConstraint && templateConstraint) {
-            keyConstraint = templateConstraint
-          }
-
-          const value = currentValue[key]
-          const isNestedObject = typeof value === "object" && value !== null && !Array.isArray(value)
-
-          const isConstraintKey = constraintKeys.has(key) || (isObjectConstraint(constraints) && !!constraints.template)
-
-          if (isNestedObject) {
-            let nestedConstraints: objectConstraintT | undefined
-
-            if (isObjectLeaf(keyConstraint)) {
-              nestedConstraints = keyConstraint.constraints
-            } else if (keyConstraint) {
-              nestedConstraints = keyConstraint as unknown as objectConstraintT
-            }
-
-            return (
-              <div key={key}>
-                <ObjectField
-                  name={fieldName}
-                  label={key}
-                  constraints={nestedConstraints}
-                />
-              </div>
-            )
-          }
-
-          return (
-            <div
-              key={key}
-              className={cn(
-                "flex gap-2",
-                keyConstraint?.type === "boolean" ? "items-center" : "items-start"
-              )}
-            >
-              <div className="flex-1">
-                <FieldRenderer
-                  name={fieldName}
-                  label={key}
-                  type={keyConstraint?.type}
-                  constraints={keyConstraint?.constraints}
-                />
-              </div>
-
-              <Button
-                size="icon"
-                type="button"
-                variant="ghost"
-                onClick={() => handleDeleteKey(key)}
-                disabled={isConstraintKey}
-                title={isConstraintKey ? "Cannot delete constraint-defined key" : "Delete key"}
-                className={cn(keyConstraint?.type !== "boolean" && "mt-6")}
-              >
-                <Trash className="h-4 w-4 text-destructive" />
-              </Button>
+        {list.map((param) => (
+          <div
+            key={param.name}
+            className={cn(
+              "flex gap-2",
+              param?.type === "boolean" ? "items-center" : "items-start"
+            )}
+          >
+            <div className="flex-1">
+              <FieldRenderer {...param} />
             </div>
-          )
-        })}
+
+            <Button
+              size="icon"
+              type="button"
+              variant="ghost"
+              onClick={() => handleDeleteKey(param?.label)}
+              className={cn(param?.type !== "boolean" && "mt-6")}
+            >
+              <Trash className="h-4 w-4 text-destructive" />
+            </Button>
+          </div>
+        ))}
       </CardContent>
     </Card>
   )
