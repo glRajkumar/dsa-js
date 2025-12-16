@@ -1,6 +1,5 @@
 import { useRef } from "react"
 
-import type { classMetadataT } from "@/utils/code-executer/schema"
 import { getFnOrCls } from "@/utils/code-executer/extractor"
 
 import { UseLogs } from "./use-logs"
@@ -80,7 +79,7 @@ export function ClassExecuter({ name, construct, methods, description, filePath 
               key={param.name}
               prefix="Method"
               {...param}
-              onExecute={a => executeMethod(param.name, a)}
+              onExecute={(a: any) => executeMethod(param.name, a)}
             />
           ))
         }

@@ -1,4 +1,3 @@
-import type { arrayConstraintT, objectConstraintT, paramT } from "./schema"
 
 function mergeArrayConstraints(oldC?: arrayConstraintT, newC?: arrayConstraintT): arrayConstraintT | undefined {
   if (!oldC && !newC) return undefined

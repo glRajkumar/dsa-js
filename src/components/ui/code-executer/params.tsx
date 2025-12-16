@@ -2,16 +2,6 @@ import { useMemo, useState } from "react"
 import { FieldValues, Path, useFieldArray, useFormContext } from "react-hook-form"
 import { Plus, Trash } from "lucide-react"
 
-import type {
-  paramT,
-  ConstraintLeafT,
-  enumConstraintT,
-  arrayConstraintT,
-  stringConstraintT,
-  numberConstraintT,
-  objectConstraintT,
-} from "@/utils/code-executer/schema"
-
 import { getDefaultValueByConstraints } from "@/utils/code-executer/get-default"
 import { cn } from "@/lib/utils"
 
@@ -89,7 +79,6 @@ interface ParamFieldProps<T extends FieldValues> {
   param: paramT
   name: Path<T>
 }
-
 export function ParamField<T extends FieldValues>({ param, name }: ParamFieldProps<T>) {
   return (
     <FieldRenderer
@@ -150,7 +139,6 @@ interface FieldRendererProps<T extends FieldValues> {
   type?: string
   constraints?: ConstraintLeafT
 }
-
 function FieldRenderer<T extends FieldValues>({
   name,
   label,
@@ -343,7 +331,6 @@ interface StringFieldProps<T extends FieldValues> {
   description?: string
   constraints?: stringConstraintT
 }
-
 function StringField<T extends FieldValues>({
   name,
   label,
@@ -370,7 +357,6 @@ interface NumberFieldProps<T extends FieldValues> {
   description?: string
   constraints?: numberConstraintT
 }
-
 function NumberField<T extends FieldValues>({
   name,
   label,
@@ -397,7 +383,6 @@ interface BooleanFieldProps<T extends FieldValues> {
   label: string
   description?: string
 }
-
 function BooleanField<T extends FieldValues>({
   name,
   label,
@@ -422,7 +407,6 @@ interface EnumFieldProps<T extends FieldValues> {
   description?: string
   constraints: enumConstraintT
 }
-
 function EnumField<T extends FieldValues>({
   name,
   label,
@@ -448,7 +432,6 @@ interface ArrayFieldProps<T extends FieldValues> {
   description?: string
   constraints?: arrayConstraintT
 }
-
 function ArrayField<T extends FieldValues>({
   name,
   label,
@@ -569,7 +552,6 @@ interface ObjectFieldProps<T extends FieldValues> {
   description?: string
   constraints?: objectConstraintT
 }
-
 function ObjectField<T extends FieldValues>({
   name,
   label,
@@ -592,13 +574,7 @@ function ObjectField<T extends FieldValues>({
         name: `${name}.${k}`,
         label: k,
         ...(root)
-      } as {
-        name: string
-        label: string
-        description?: string
-        type?: string
-        constraints?: ConstraintLeafT
-      }
+      } as any
     })
   }, [currentValue, constraints])
 

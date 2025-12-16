@@ -1,8 +1,6 @@
 import * as fs from "fs"
 import ts from "typescript"
 
-import type { fnOrClsArrT, paramT } from "./schema"
-
 function extractParameters(parameters: ts.NodeArray<ts.ParameterDeclaration>): paramT[] {
   return parameters
     .filter((param) => !param.modifiers?.some((m) => m.kind === ts.SyntaxKind.PrivateKeyword))

@@ -1,7 +1,5 @@
 import { Trash2, CheckCircle, XCircle, AlertCircle } from 'lucide-react'
 
-import type { logT } from '@/utils/code-executer/schema'
-
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/shadcn-ui/card'
 import { Button } from '@/components/shadcn-ui/button'
 import { Badge } from '@/components/shadcn-ui/badge'

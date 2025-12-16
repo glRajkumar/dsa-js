@@ -1,6 +1,5 @@
 import { FormProvider, useForm } from 'react-hook-form'
 
-import type { paramT } from '@/utils/code-executer/schema'
 import { getDefaultValues } from '@/utils/code-executer/get-default'
 
 import { Card, CardContent } from '@/components/shadcn-ui/card'

@@ -1,7 +1,5 @@
 import { useState } from "react"
 
-import type { logT } from "@/utils/code-executer/schema"
-
 export function UseLogs() {
   const [logs, setLogs] = useState<logT[]>([])
 

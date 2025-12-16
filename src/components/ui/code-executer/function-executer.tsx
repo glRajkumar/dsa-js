@@ -2,7 +2,7 @@ import { FormProvider, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 
-import { generateZodSchema, type functionMetadataT } from "@/utils/code-executer/schema"
+import { generateZodSchema } from "@/utils/code-executer/schema"
 import { getDefaultValues } from '@/utils/code-executer/get-default'
 import { getFnOrCls } from "@/utils/code-executer/extractor"
 

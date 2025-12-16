@@ -1,5 +1,3 @@
-import type { testCaseT } from '@/utils/code-executer/schema'
-
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/shadcn-ui/accordion"
 import { DynamicCodeExtended } from '@/components/fuma-ui/dynamic-code-extended'
 

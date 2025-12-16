@@ -1,4 +1,3 @@
-import type { jsonMetaDataT } from "@/utils/code-executer/schema"
 
 export const metadata: jsonMetaDataT = {
   testCases: [],
@@ -85,9 +84,11 @@ export const metadata: jsonMetaDataT = {
             template: {
               type: "object",
               constraints: {
-                name: { type: "string" },
-                qty: { type: "number" },
-                price: { type: "number" },
+                by: {
+                  name: { type: "string" },
+                  qty: { type: "number" },
+                  price: { type: "number" },
+                }
               },
             }
           },
@@ -101,9 +102,11 @@ export const metadata: jsonMetaDataT = {
           type: "object",
           description: "Shipping details",
           constraints: {
-            address: { type: "string" },
-            city: { type: "string" },
-            express: { type: "boolean" },
+            by: {
+              address: { type: "string" },
+              city: { type: "string" },
+              express: { type: "boolean" },
+            }
           },
           defaultValue: {
             address: "221B Baker Street",
@@ -207,15 +210,19 @@ export const metadata: jsonMetaDataT = {
           name: "address",
           type: "object",
           constraints: {
-            street: { type: "string" },
-            city: { type: "string" },
-            coordinates: {
-              type: "object",
-              constraints: {
-                lat: { type: "number" },
-                lng: { type: "number" },
+            by: {
+              street: { type: "string" },
+              city: { type: "string" },
+              coordinates: {
+                type: "object",
+                constraints: {
+                  by: {
+                    lat: { type: "number" },
+                    lng: { type: "number" },
+                  }
+                },
               },
-            },
+            }
           },
           defaultValue: {
             street: "Main Street",
@@ -246,8 +253,10 @@ export const metadata: jsonMetaDataT = {
             template: {
               type: "object",
               constraints: {
-                id: { type: "number" },
-                label: { type: "string" },
+                by: {
+                  id: { type: "number" },
+                  label: { type: "string" },
+                }
               },
             }
           },
@@ -257,12 +266,14 @@ export const metadata: jsonMetaDataT = {
           name: "settings",
           type: "object",
           constraints: {
-            theme: { type: "string" },
-            shortcuts: { type: "array" },
-            permissions: {
-              type: "array",
-              constraints: { template: { type: "boolean" } }
-            },
+            by: {
+              theme: { type: "string" },
+              shortcuts: { type: "array" },
+              permissions: {
+                type: "array",
+                constraints: { template: { type: "boolean" } }
+              },
+            }
           },
           defaultValue: {
             theme: "light",
@@ -278,7 +289,7 @@ export const metadata: jsonMetaDataT = {
           defaultValue: ["A", 1, true],
           constraints: {
             // tuple: ["string", "number", "boolean"],
-            byIndex: {
+            by: {
               0: { type: "string" },
               1: { type: "number" },
               2: { type: "boolean" },
@@ -298,7 +309,7 @@ export const metadata: jsonMetaDataT = {
           defaultValue: ["a", 1, true],
           constraints: {
             // tuple: ["string", "number", "boolean"],
-            byIndex: {
+            by: {
               0: { type: "string" },
               1: { type: "number" },
               2: { type: "boolean" },
@@ -310,27 +321,32 @@ export const metadata: jsonMetaDataT = {
           name: "preferences",
           type: "object",
           constraints: {
-            ui: {
-              type: "object",
-              constraints: {
-                mode: {
-                  type: "string",
-                  // enum: ["light", "dark"]
+            by: {
+              ui: {
+                type: "object",
+                constraints: {
+                  by: {
+                    mode: {
+                      type: "string",
+                      // enum: ["light", "dark"]
+                    },
+                    scale: { type: "number" },
+                  }
                 },
-                scale: { type: "number" },
               },
-            },
-            notifications: {
-              type: "object",
-              constraints: {
-                email: { type: "boolean" },
-                sms: { type: "boolean" },
+              notifications: {
+                type: "object",
+                constraints: {
+                  template: {
+                    type: "boolean"
+                  }
+                },
               },
-            },
-            categories: {
-              type: "array",
-              constraints: { template: { type: "string" } }
-            },
+              categories: {
+                type: "array",
+                constraints: { template: { type: "string" } }
+              },
+            }
           },
           defaultValue: {
             ui: { mode: "light", scale: 1 },

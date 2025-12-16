@@ -1,4 +1,3 @@
-import type { jsonMetaDataT, functionMetadataT, classMetadataT, testCaseT } from "./schema"
 import { extractMetadataFromFile } from "./extractor"
 import { mergeParams } from "./merger"
 import * as path from "path"
