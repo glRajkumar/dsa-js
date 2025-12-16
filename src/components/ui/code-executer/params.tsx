@@ -3,6 +3,7 @@ import { useFormContext } from "react-hook-form"
 import { Plus, Trash } from "lucide-react"
 
 import { getArrayDefault, getObjectDefault } from "@/utils/code-executer/get-default"
+import { getLeafStructure } from "@/utils/code-executer/schema"
 import { cn } from "@/lib/utils"
 
 import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/shadcn-ui/card"
@@ -16,59 +17,6 @@ import { Switch } from "@/components/shadcn-ui/switch"
 import { Badge } from "@/components/shadcn-ui/badge"
 import { Input } from "@/components/shadcn-ui/input"
 
-function isConstraintLeaf(
-  c: objectConstraintT | ConstraintLeafT | undefined,
-): c is ConstraintLeafT {
-  return !!c && typeof c === "object" && "type" in c
-}
-
-function isObjectConstraint(
-  c: objectConstraintT | ConstraintLeafT | undefined,
-): c is objectConstraintT {
-  return !!c &&
-    typeof c === "object" &&
-    !("type" in c) &&
-    ("template" in c || "by" in c)
-}
-
-function getObjectConstraintLabel(constraints?: objectConstraintT): string {
-  if (!constraints) return "Object"
-
-  if (isObjectConstraint(constraints)) {
-    const { template, by } = constraints
-    const keys = by ? Object.keys(by) : []
-    const preview = keys.slice(0, 3).map(key => {
-      const constraint = by?.[key]
-      return `${key}: ${constraint?.type}`
-    }).join("; ")
-
-    const remaining = keys.length - 3
-    const templatePart = template ? `template: ${template.type}` : ""
-    const parts = [templatePart, preview].filter(Boolean)
-
-    return `Object{${parts.join("; ")}${remaining > 0 ? `; +${remaining} more` : ""}}`
-  }
-
-  if (isConstraintLeaf(constraints) && (constraints as any)?.type === "object" && (constraints as any)?.constraints) {
-    const innerConstraints = (constraints as any).constraints
-    if ('by' in innerConstraints && innerConstraints.by) {
-      const keys = Object.keys(innerConstraints.by).slice(0, 3)
-      const preview = keys.map(key => {
-        const constraint = innerConstraints.by[key]
-        return `${key}: ${constraint.type}`
-      }).join("; ")
-
-      const remaining = Object.keys(innerConstraints.by).length - 3
-      const templatePart = innerConstraints.template ? `template: ${innerConstraints.template.type}` : ""
-      const parts = [templatePart, preview].filter(Boolean)
-
-      return `Object{${parts.join("; ")}${remaining > 0 ? `; +${remaining} more` : ""}}`
-    }
-  }
-
-  return "Object"
-}
-
 function getDefaultType(val: any) {
   if (typeof val === "object") {
     if (val === null) return "String"
@@ -79,6 +27,16 @@ function getDefaultType(val: any) {
   if (typeof val === "boolean") return "Boolean"
   if (typeof val === "number") return "Number"
   return "String"
+}
+
+function LabelTooltip({ title, content }: { title: "Object" | "Array", content: ReturnType<typeof getLeafStructure> }) {
+  return (
+    <TooltipWrapper
+      trigger={<Badge variant="secondary">{title}</Badge>}
+      content={<pre>{JSON.stringify(content, null, 2).replaceAll('"', "")}</pre>}
+      contentCls="px-4"
+    />
+  )
 }
 
 function ObjTextField({ name, type, isInvalid }: { name: string, type: string, isInvalid: boolean }) {
@@ -331,9 +289,9 @@ function ArrayField({
         <div className="flex items-center gap-2 flex-wrap mr-auto">
           <CardTitle>{label}</CardTitle>
 
-          <TooltipWrapper
-            trigger={<Badge variant="secondary">Array</Badge>}
-            content={constraints?.template ? `[${constraints.template.type}]` : "[any]"}
+          <LabelTooltip
+            title="Array"
+            content={getLeafStructure({ type: "array", constraints })}
           />
 
           <Badge variant="outline">
@@ -448,9 +406,9 @@ function ObjectField({
         <div className="flex items-center gap-2 flex-wrap mr-auto">
           <CardTitle>{label}</CardTitle>
 
-          <TooltipWrapper
-            trigger={<Badge variant="secondary">Object</Badge>}
-            content={getObjectConstraintLabel(constraints)}
+          <LabelTooltip
+            title="Object"
+            content={getLeafStructure({ type: "object", constraints })}
           />
 
           <Badge variant="outline">{objectKeys.length} keys</Badge>

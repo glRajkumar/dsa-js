@@ -143,3 +143,58 @@ export function generateZodSchema(params: paramT[]) {
 
   return z.object(shape)
 }
+
+type SchemaStructure =
+  | string
+  | { [key: string]: SchemaStructure }
+  | SchemaStructure[]
+
+type SchemaObject = { [key: string]: SchemaStructure }
+
+export function getLeafStructure(leaf: ConstraintLeafT): SchemaStructure {
+  switch (leaf.type) {
+    case 'boolean': return 'boolean'
+    case 'string': return 'string'
+    case 'number': return 'number'
+    case 'enum': return 'enum'
+
+    case 'object':
+      if (leaf.constraints) {
+        const result: SchemaObject = {}
+
+        if ('template' in leaf.constraints && leaf.constraints.template) {
+          result.template = getLeafStructure(leaf.constraints.template)
+        }
+
+        if ('by' in leaf.constraints && leaf.constraints.by) {
+          for (const [key, value] of Object.entries(leaf.constraints.by)) {
+            result[key] = getLeafStructure(value)
+          }
+        }
+
+        return result
+      }
+      return 'object'
+
+    case 'array':
+      if (leaf.constraints) {
+        const result: SchemaObject = {}
+
+        if ('template' in leaf.constraints && leaf.constraints.template) {
+          result.template = getLeafStructure(leaf.constraints.template)
+        }
+
+        if ('by' in leaf.constraints && leaf.constraints.by) {
+          for (const [key, value] of Object.entries(leaf.constraints.by)) {
+            result[key] = getLeafStructure(value)
+          }
+        }
+
+        return result
+      }
+      return 'array'
+
+    default:
+      return 'any'
+  }
+}
