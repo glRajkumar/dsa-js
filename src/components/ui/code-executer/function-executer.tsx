@@ -19,7 +19,7 @@ import {
 import { Button } from "@/components/shadcn-ui/button"
 import { Badge } from "@/components/shadcn-ui/badge"
 
-import { ParamField } from "./params"
+import { FieldRenderer } from "./params"
 import { Results } from './results'
 
 type props = functionMetadataT & {
@@ -73,10 +73,10 @@ export function FunctionExecuter({ name, params, description, isAsync, prefix = 
               className='space-y-4 [&_[role="group"]]:gap-1'
             >
               {params.map((param) => (
-                <ParamField
+                <FieldRenderer
                   key={param.name}
-                  param={param}
-                  name={param.name}
+                  label={param.name}
+                  {...param}
                 />
               ))}
             </form>

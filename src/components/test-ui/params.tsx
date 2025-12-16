@@ -3,7 +3,7 @@ import { FormProvider, useForm } from 'react-hook-form'
 import { getDefaultValues } from '@/utils/code-executer/get-default'
 
 import { Card, CardContent } from '@/components/shadcn-ui/card'
-import { ParamField } from '@/components/ui/code-executer/params'
+import { FieldRenderer } from '@/components/ui/code-executer/params'
 import { Button } from '@/components/shadcn-ui/button'
 
 function Params() {
@@ -646,10 +646,10 @@ function Params() {
             className='space-y-4 [&_[role="group"]]:gap-1'
           >
             {paramsData.map((param) => (
-              <ParamField
+              <FieldRenderer
                 key={param.name}
-                param={param}
-                name={param.name}
+                label={param.name}
+                {...param}
               />
             ))}
 
