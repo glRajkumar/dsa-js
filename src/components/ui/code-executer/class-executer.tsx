@@ -38,7 +38,7 @@ export function ClassExecuter({ name, construct, methods, description, filePath 
   const executeMethod = async (name: string, args: any[]) => {
     try {
       const result = await ref.current[name](...args)
-      console.log(result)
+
       logs.addLog({
         name: `Method: ${name}`,
         input: args,

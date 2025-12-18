@@ -1,33 +1,89 @@
 import * as fs from "fs"
 import ts from "typescript"
 
-function extractParameters(parameters: ts.NodeArray<ts.ParameterDeclaration>): paramT[] {
-  return parameters
-    .filter((param) => !param.modifiers?.some((m) => m.kind === ts.SyntaxKind.PrivateKeyword))
-    .map((param) => {
-      let type = "string"
+function getInitializerValue(initializer?: ts.Expression): any {
+  if (!initializer) return undefined
 
-      if (param.type) {
-        if (param.type.kind === ts.SyntaxKind.NumberKeyword) {
-          type = "number"
+  if (ts.isNumericLiteral(initializer)) {
+    return Number(initializer.text)
+  }
+
+  if (ts.isStringLiteral(initializer) || ts.isNoSubstitutionTemplateLiteral(initializer)) {
+    return initializer.text
+  }
+
+  if (initializer.kind === ts.SyntaxKind.TrueKeyword) return true
+  if (initializer.kind === ts.SyntaxKind.FalseKeyword) return false
+  if (initializer.kind === ts.SyntaxKind.NullKeyword) return null
+
+  if (ts.isPrefixUnaryExpression(initializer) && initializer.operator === ts.SyntaxKind.MinusToken) {
+    const value = getInitializerValue(initializer.operand)
+    return typeof value === "number" ? -value : undefined
+  }
+
+  if (ts.isArrayLiteralExpression(initializer)) {
+    return initializer.elements.map((el) => getInitializerValue(el as ts.Expression))
+  }
+
+  if (ts.isObjectLiteralExpression(initializer)) {
+    const result: Record<string, any> = {}
+
+    initializer.properties.forEach((prop) => {
+      if (ts.isPropertyAssignment(prop)) {
+        let key: string | undefined
+
+        if (ts.isIdentifier(prop.name)) {
+          key = prop.name.text
         }
-        else if (param.type.kind === ts.SyntaxKind.BooleanKeyword) {
-          type = "boolean"
+        else if (ts.isStringLiteral(prop.name)) {
+          key = prop.name.text
         }
-        else if (ts.isArrayTypeNode(param.type)) {
-          type = "array"
+        else if (ts.isNumericLiteral(prop.name)) {
+          key = prop.name.text
         }
-        else if (ts.isTypeReferenceNode(param.type) && param.type.typeName) {
-          const typeName = param.type.typeName.getText()
-          type = typeName === "Array" ? "array" : typeName
+
+        if (key !== undefined) {
+          result[key] = getInitializerValue(prop.initializer as ts.Expression)
         }
       }
-
-      return {
-        type,
-        name: param.name?.getText() || "",
-      } as paramT
     })
+
+    return result
+  }
+
+  return initializer.getText()
+}
+
+function extractParameters(parameters: ts.NodeArray<ts.ParameterDeclaration>): paramT[] {
+  return parameters.map((param) => {
+    let type = "string"
+
+    if (param.type) {
+      if (param.type.kind === ts.SyntaxKind.NumberKeyword) {
+        type = "number"
+      }
+      else if (param.type.kind === ts.SyntaxKind.BooleanKeyword) {
+        type = "boolean"
+      }
+      else if (ts.isArrayTypeNode(param.type)) {
+        type = "array"
+      }
+      else if (ts.isTypeReferenceNode(param.type) && param.type.typeName) {
+        const typeName = param.type.typeName.getText()
+        type = typeName === "Array" ? "array" : typeName
+      }
+    }
+
+    const isOptional = Boolean(param.questionToken || param.initializer)
+    const defaultValue = getInitializerValue(param.initializer)
+
+    return {
+      type,
+      name: param.name?.getText() || "",
+      required: !isOptional,
+      ...(defaultValue ? { defaultValue } : {}),
+    } as paramT
+  })
 }
 
 export function extractMetadataFromFile(filePath: string): fnOrClsArrT {

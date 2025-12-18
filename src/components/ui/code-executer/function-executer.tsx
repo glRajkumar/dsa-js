@@ -56,8 +56,8 @@ export function FunctionExecuter({ name, params, description, isAsync, prefix = 
           <Button
             size="sm"
             variant="secondary"
-            className="border"
-            onClick={() => handleSubmit(methods.getValues())}
+            className="h-auto py-1 border text-xs rounded-sm"
+            onClick={methods.handleSubmit(handleSubmit)}
           >
             Execute
           </Button>
@@ -94,7 +94,7 @@ export function FunctionExecuterWrapper({ filePath, ...rest }: Omit<props, "onEx
     try {
       const fn = await getFnOrCls(filePath, rest.name)
       const result = fn(...args)
-      console.log(result)
+
       logs.addLog({
         input: args,
         output: result
