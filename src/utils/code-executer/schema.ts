@@ -49,35 +49,43 @@ function generateLeafSchema(constraint: ConstraintLeafT): z.ZodTypeAny {
       }
 
       if (constraints?.by) {
-        const indexedSchemas: z.ZodTypeAny[] = []
+        schema = z.array(z.any()).superRefine((arr, ctx) => {
+          arr.forEach((item, index) => {
+            let result: any
 
-        const maxIndex = Object.keys(constraints.by)
-          .map(Number)
-          .reduce((max, current) => Math.max(max, current), -1)
+            if (constraints?.by?.[index]) {
+              const indexConstraint = constraints?.by?.[index]
+              const curr = generateLeafSchema(indexConstraint)
+              result = curr.safeParse(item)
+            } else {
+              result = itemSchema.safeParse(item)
+            }
 
-        const tupleSize = maxIndex + 1
+            if (!result.success) {
+              result.error.issues.forEach((issue: any) => {
+                ctx.addIssue({
+                  ...issue,
+                  path: [index, ...issue.path],
+                })
+              })
+            }
+          })
+        })
 
-        for (let i = 0; i < tupleSize; i++) {
-          const indexConstraint = constraints.by[i]
-          if (indexConstraint) {
-            indexedSchemas.push(generateLeafSchema(indexConstraint))
-          } else {
-            indexedSchemas.push(itemSchema)
-          }
-        }
-
-        schema = z.tuple(indexedSchemas as [z.ZodTypeAny, ...z.ZodTypeAny[]]).rest(itemSchema)
       } else {
         schema = z.array(itemSchema)
       }
 
       if (constraints?.min !== undefined) {
-        schema = (schema as z.ZodArray<any>).min(constraints.min,
-          `Minimum ${constraints.min} items required`)
+        schema = (schema as z.ZodArray<any>).min(constraints.min, `Minimum ${constraints.min} items required`)
+      } else if (constraints?.by) {
+        const max = Math.max(...Object.keys(constraints?.by).map(Number)) ?? -1
+        const min = max + 1
+        schema = (schema as z.ZodArray<any>).min(min, `Minimum ${min} items required`)
       }
+
       if (constraints?.max !== undefined) {
-        schema = (schema as z.ZodArray<any>).max(constraints.max,
-          `Maximum ${constraints.max} items allowed`)
+        schema = (schema as z.ZodArray<any>).max(constraints.max, `Maximum ${constraints.max} items allowed`)
       }
 
       return schema
@@ -130,7 +138,7 @@ export function generateZodSchema(params: paramT[]) {
 
     schema = generateLeafSchema(constraintLeaf)
 
-    if (param.required === false) {
+    if (!param.required) {
       schema = schema.optional()
     }
 

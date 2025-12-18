@@ -6,7 +6,7 @@ import { getArrayDefault, getObjectDefault } from "@/utils/code-executer/get-def
 import { getLeafStructure } from "@/utils/code-executer/schema"
 import { cn } from "@/lib/utils"
 
-import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/shadcn-ui/card"
+import { Card, CardAction, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/shadcn-ui/card"
 import { InputWrapper, SwitchWrapper, SelectWrapper as EnumSelectWrapper } from "@/components/shadcn-ui/field-wrapper-rhf"
 import { Field, FieldDescription, FieldError, FieldLabel } from "@/components/shadcn-ui/field"
 import { TooltipWrapper } from "@/components/shadcn-ui/tooltip"
@@ -192,7 +192,7 @@ function DynamicTypeField({
 type StringFieldProps = basePropsT & {
   constraints?: stringConstraintT
 }
-function StringField(props: StringFieldProps) {
+function StringField({ constraints, ...props }: StringFieldProps) {
   const { control } = useFormContext()
 
   return (
@@ -200,6 +200,7 @@ function StringField(props: StringFieldProps) {
       control={control}
       placeholder={`Enter ${props.label}`}
       {...props}
+      {...constraints}
     />
   )
 }
@@ -207,7 +208,7 @@ function StringField(props: StringFieldProps) {
 type NumberFieldProps = basePropsT & {
   constraints?: numberConstraintT
 }
-function NumberField(props: NumberFieldProps) {
+function NumberField({ constraints, ...props }: NumberFieldProps) {
   const { control } = useFormContext()
 
   return (
@@ -216,6 +217,7 @@ function NumberField(props: NumberFieldProps) {
       control={control}
       placeholder={`Enter ${props.label}`}
       {...props}
+      {...constraints}
     />
   )
 }
@@ -256,7 +258,7 @@ function ArrayField({
   description,
   constraints,
 }: ArrayFieldProps) {
-  const { watch, setValue } = useFormContext()
+  const { formState: { errors }, watch, setValue } = useFormContext()
   const currentValue: any[] = watch(name) as any ?? []
 
   const list = useMemo(() => {
@@ -349,6 +351,13 @@ function ArrayField({
           </div>
         ))}
       </CardContent>
+
+      {
+        errors && Object.keys(errors)?.length > 0 &&
+        <CardFooter className="text-sm text-destructive">
+          Invalid Input, check out reference schema for validation
+        </CardFooter>
+      }
     </Card>
   )
 }
@@ -362,7 +371,7 @@ function ObjectField({
   description,
   constraints,
 }: ObjectFieldProps) {
-  const { setValue, watch } = useFormContext()
+  const { formState: { errors }, setValue, watch } = useFormContext()
   const [newKey, setNewKey] = useState("")
 
   const currentValue: Record<string, unknown> = watch(name) as any ?? {}
@@ -465,6 +474,13 @@ function ObjectField({
           </div>
         ))}
       </CardContent>
+
+      {
+        errors && Object.keys(errors)?.length > 0 &&
+        <CardFooter className="text-sm text-destructive">
+          Invalid Input, check out reference schema for validation
+        </CardFooter>
+      }
     </Card>
   )
 }

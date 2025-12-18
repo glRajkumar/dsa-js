@@ -1,6 +1,9 @@
 import { FormProvider, useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { z } from 'zod'
 
 import { getDefaultValues } from '@/utils/code-executer/get-default'
+import { generateZodSchema } from '@/utils/code-executer/schema'
 
 import { Card, CardContent } from '@/components/shadcn-ui/card'
 import { FieldRenderer } from '@/components/ui/code-executer/params'
@@ -629,7 +632,11 @@ function Params() {
     },
   ]
 
+  const hasParams = paramsData && paramsData.length > 0
+  const schema = hasParams ? generateZodSchema(paramsData) : z.object({})
+
   const methods = useForm({
+    resolver: zodResolver(schema as any),
     defaultValues: getDefaultValues(paramsData),
   })
 
