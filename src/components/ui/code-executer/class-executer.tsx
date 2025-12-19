@@ -1,6 +1,7 @@
 import { useRef } from "react"
 import { toast } from "sonner"
 
+import { captureConsole } from "@/utils/code-executer/console-capture"
 import { getFnOrCls } from "@/utils/code-executer/extractor"
 
 import { useLogs } from "./use-logs"
@@ -15,6 +16,8 @@ export function ClassExecuter({ name, construct, methods, description, filePath 
   const ref = useRef<any>(null)
 
   async function init(orderedArgs: any[], input: Record<string, primOrArrOrObjT>) {
+    const { consoleLogs, restore } = captureConsole()
+
     try {
       const fn = await getFnOrCls(filePath, name)
       const result = new (fn as any)(...orderedArgs)
@@ -24,6 +27,7 @@ export function ClassExecuter({ name, construct, methods, description, filePath 
         input,
         name: `Constructor: ${name}`,
         output: "Instance created successfully",
+        consoleLogs: consoleLogs.length > 0 ? consoleLogs : undefined
       })
 
     } catch (error) {
@@ -32,13 +36,19 @@ export function ClassExecuter({ name, construct, methods, description, filePath 
         name: `Constructor: ${name}`,
         output: "",
         error: JSON.stringify(error),
+        consoleLogs: consoleLogs.length > 0 ? consoleLogs : undefined
       })
+    } finally {
+      restore()
     }
   }
 
   const executeMethod = async (name: string, orderedArgs: any[], input: Record<string, primOrArrOrObjT>) => {
+    const { consoleLogs, restore } = captureConsole()
+
     try {
       if (!ref.current) {
+        restore()
         return toast.error("Initiate class before executing methods")
       }
 
@@ -47,7 +57,8 @@ export function ClassExecuter({ name, construct, methods, description, filePath 
       logs.addLog({
         input,
         name: `Method: ${name}`,
-        output: result
+        output: result,
+        consoleLogs: consoleLogs.length > 0 ? consoleLogs : undefined
       })
 
     } catch (error) {
@@ -56,7 +67,10 @@ export function ClassExecuter({ name, construct, methods, description, filePath 
         name: `Method: ${name}`,
         output: "",
         error: JSON.stringify(error),
+        consoleLogs: consoleLogs.length > 0 ? consoleLogs : undefined
       })
+    } finally {
+      restore()
     }
   }
 

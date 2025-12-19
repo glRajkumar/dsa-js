@@ -136,4 +136,5 @@ type logT = {
   output: primOrArrOrObjT
   name?: string
   error?: string
+  consoleLogs?: string[]
 }

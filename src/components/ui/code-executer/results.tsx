@@ -142,6 +142,15 @@ export function Results({ logs, clearById, clearLogs }: props) {
             <div className="space-y-2 text-sm">
               {Object.keys(log.input).length > 0 && <InputLog input={log.input} />}
 
+              {log.consoleLogs && log.consoleLogs.length > 0 && (
+                <div>
+                  <strong className="text-gray-700">Console Logs:</strong>
+                  <pre className="mt-1 p-2 bg-white rounded border text-xs overflow-x-auto">
+                    {log.consoleLogs.join('\n')}
+                  </pre>
+                </div>
+              )}
+
               {log.error ? (
                 <div>
                   <strong className="text-red-700">Error:</strong>

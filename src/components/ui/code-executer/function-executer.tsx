@@ -4,6 +4,7 @@ import { z } from 'zod'
 
 import { generateZodSchema } from "@/utils/code-executer/schema"
 import { getDefaultValues } from '@/utils/code-executer/get-default'
+import { captureConsole } from "@/utils/code-executer/console-capture"
 import { getFnOrCls } from "@/utils/code-executer/extractor"
 
 import { useLogs } from './use-logs'
@@ -91,13 +92,16 @@ export function FunctionExecuterWrapper({ filePath, ...rest }: Omit<props, "onEx
   const logs = useLogs()
 
   const executeFunction = async (orderedArgs: any[], input: Record<string, primOrArrOrObjT>) => {
+    const { consoleLogs, restore } = captureConsole()
+
     try {
       const fn = await getFnOrCls(filePath, rest.name)
-      const result = fn(...orderedArgs)
+      const result = await fn(...orderedArgs)
 
       logs.addLog({
         input,
-        output: result
+        output: result,
+        consoleLogs: consoleLogs.length > 0 ? consoleLogs : undefined
       })
 
     } catch (error) {
@@ -105,7 +109,10 @@ export function FunctionExecuterWrapper({ filePath, ...rest }: Omit<props, "onEx
         input,
         output: "",
         error: JSON.stringify(error),
+        consoleLogs: consoleLogs.length > 0 ? consoleLogs : undefined
       })
+    } finally {
+      restore()
     }
   }
 
