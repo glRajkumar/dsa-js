@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Trash2, CheckCircle, XCircle, AlertCircle, Trash, Minimize, Expand } from 'lucide-react'
 
 import { useLogs } from './use-logs'
@@ -64,8 +64,30 @@ function InputLog({ input }: inputProps) {
   )
 }
 
+function outputText(output: primOrArrOrObjT) {
+  if (["string", "number", "boolean"].includes(typeof output) || output === null || output === undefined) {
+    return `${output}`
+  }
+
+  return JSON.stringify(output, null, 2)
+}
+
 type props = ReturnType<typeof useLogs>
 export function Results({ logs, clearById, clearLogs }: props) {
+  const scrollRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (logs.length > 1) {
+      const el = scrollRef.current
+      if (!el) return
+
+      el.scrollTo({
+        top: el.scrollHeight,
+        behavior: "smooth",
+      })
+    }
+  }, [logs.length])
+
   if (logs.length === 0) {
     return (
       <Card className="mb-4">
@@ -93,7 +115,10 @@ export function Results({ logs, clearById, clearLogs }: props) {
         </Button>
       </CardHeader>
 
-      <CardContent className="space-y-3 max-h-[620px] overflow-y-auto">
+      <CardContent
+        ref={scrollRef}
+        className="space-y-3 max-h-[620px] overflow-y-auto"
+      >
         {logs.map((log) => (
           <div
             key={log.id}
@@ -122,7 +147,7 @@ export function Results({ logs, clearById, clearLogs }: props) {
             </div>
 
             <div className="space-y-2 text-sm">
-              <InputLog input={log.input} />
+              {Object.keys(log.input).length > 0 && <InputLog input={log.input} />}
 
               {log.error ? (
                 <div>
@@ -135,7 +160,7 @@ export function Results({ logs, clearById, clearLogs }: props) {
                 <div>
                   <strong className="text-gray-700">Output:</strong>
                   <pre className="mt-1 p-2 bg-white rounded border text-xs overflow-x-auto">
-                    {JSON.stringify(log.output, null, 2)}
+                    {outputText(log.output) ?? "No data found"}
                   </pre>
                 </div>
               )}

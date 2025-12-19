@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useId, useState } from 'react'
 import { CalendarIcon } from 'lucide-react'
 import { format } from 'date-fns'
 
@@ -27,13 +27,14 @@ type BaseProps = {
 
 type InputProps = BaseProps & React.InputHTMLAttributes<HTMLInputElement>
 export function InputWrapper({ name, label, error, invalid, className, type = 'text', placeholder, description, ...props }: InputProps) {
+  const id = useId()
   const isInvalid = invalid || !!error
 
   return (
     <Field className={className} data-invalid={isInvalid}>
-      {label && <FieldLabel htmlFor={name}>{label}</FieldLabel>}
+      {label && <FieldLabel htmlFor={id + name}>{label}</FieldLabel>}
       <Input
-        id={name}
+        id={id + name}
         name={name}
         type={type}
         placeholder={placeholder || `Enter ${label}`}
@@ -49,14 +50,15 @@ export function InputWrapper({ name, label, error, invalid, className, type = 't
 
 type TextareaProps = BaseProps & React.TextareaHTMLAttributes<HTMLTextAreaElement>
 export function TextareaWrapper({ name, label, error, invalid, className, placeholder, description, ...rest }: TextareaProps) {
+  const id = useId()
   const isInvalid = invalid || !!error
 
   return (
     <Field className={className} data-invalid={isInvalid}>
-      {label && <FieldLabel htmlFor={name}>{label}</FieldLabel>}
+      {label && <FieldLabel htmlFor={id + name}>{label}</FieldLabel>}
       <Textarea
         id={name}
-        name={name}
+        name={id + name}
         placeholder={placeholder || `Enter ${label}`}
         aria-invalid={isInvalid}
         {...rest}
@@ -73,11 +75,12 @@ type RadioProps = BaseProps & {
   onValueChange?: (value: allowedPrimitiveT) => void
 }
 export function RadioWrapper({ name, label, error, invalid, className, options, value, description, onValueChange }: RadioProps) {
+  const id = useId()
   const isInvalid = invalid || !!error
 
   return (
     <Field className={className} data-invalid={isInvalid}>
-      {label && <FieldLabel htmlFor={`${name}-0`}>{label}</FieldLabel>}
+      {label && <FieldLabel htmlFor={`${id}-${name}-0`}>{label}</FieldLabel>}
       <RadioGroup
         value={value ? String(value) : undefined}
         onValueChange={(val) => onValueChange?.(parseAllowedPrimitive(val))}
@@ -86,8 +89,8 @@ export function RadioWrapper({ name, label, error, invalid, className, options, 
       >
         {options.map((option, i) => (
           <div key={getKey(option, i)} className='flex items-center gap-2'>
-            <RadioGroupItem value={`${getValue(option)}`} id={`${name}-${i}`} />
-            <FieldLabel htmlFor={`${name}-${i}`} className='font-normal'>
+            <RadioGroupItem value={`${getValue(option)}`} id={`${id}-${name}-${i}`} />
+            <FieldLabel htmlFor={`${id}-${name}-${i}`} className='font-normal'>
               {getLabel(option)}
             </FieldLabel>
           </div>
@@ -105,6 +108,7 @@ type CheckboxProps = BaseProps & {
   onValueChange?: (value: allowedPrimitiveT[]) => void
 }
 export function CheckboxWrapper({ name, label, error, invalid, className, options, value = [], description, onValueChange }: CheckboxProps) {
+  const id = useId()
   const isInvalid = invalid || !!error
 
   const toggleValue = (v: allowedPrimitiveT) => {
@@ -117,7 +121,7 @@ export function CheckboxWrapper({ name, label, error, invalid, className, option
 
   return (
     <Field className={className} data-invalid={isInvalid}>
-      {label && <FieldLabel htmlFor={`${name}-0`}>{label}</FieldLabel>}
+      {label && <FieldLabel htmlFor={`${id}-${name}-0`}>{label}</FieldLabel>}
       <div className='flex items-center flex-wrap gap-4' aria-invalid={isInvalid}>
         {options.map((option, i) => {
           const val = getValue(option)
@@ -127,11 +131,11 @@ export function CheckboxWrapper({ name, label, error, invalid, className, option
           return (
             <div key={getKey(option, i)} className='flex items-center gap-2 space-y-0'>
               <Checkbox
-                id={`${name}-${i}`}
+                id={`${id}-${name}-${i}`}
                 checked={isChecked}
                 onCheckedChange={() => toggleValue(parsedVal)}
               />
-              <FieldLabel htmlFor={`${name}-${i}`} className='font-normal'>
+              <FieldLabel htmlFor={`${id}-${name}-${i}`} className='font-normal'>
                 {getLabel(option)}
               </FieldLabel>
             </div>
@@ -149,14 +153,15 @@ type SwitchProps = BaseProps & {
   onCheckedChange?: (checked: boolean) => void
 }
 export function SwitchWrapper({ name, label, error, invalid, className, checked, description, onCheckedChange }: SwitchProps) {
+  const id = useId()
   const isInvalid = invalid || !!error
 
   return (
     <Field className={className} data-invalid={isInvalid}>
       <div className='flex items-center justify-between gap-4'>
-        {label && <FieldLabel htmlFor={name}>{label}</FieldLabel>}
+        {label && <FieldLabel htmlFor={id + name}>{label}</FieldLabel>}
         <Switch
-          id={name}
+          id={id + name}
           checked={checked}
           onCheckedChange={onCheckedChange}
           aria-label={typeof label === 'string' ? label : name}
@@ -174,14 +179,15 @@ type SelectProps = BaseProps & Omit<selectProps, 'value' | 'onValueChange'> & {
   onValueChange?: (value: allowedPrimitiveT) => void
 }
 export function SelectWrapper({ name, label, error, invalid, className, options, placeholder, value, description, onValueChange, ...props }: SelectProps) {
+  const id = useId()
   const isInvalid = invalid || !!error
 
   return (
     <Field className={className} data-invalid={isInvalid}>
-      {label && <FieldLabel htmlFor={name}>{label}</FieldLabel>}
+      {label && <FieldLabel htmlFor={id + name}>{label}</FieldLabel>}
       <SelectPrimitiveWrapper
         {...props}
-        id={name}
+        id={id + name}
         options={options}
         value={value ? String(value) : undefined}
         placeholder={placeholder ?? `Select ${label}`}
@@ -200,15 +206,17 @@ type DatePickerProps = BaseProps & Omit<React.ComponentProps<typeof Calendar>, '
 }
 export function DatePickerWrapper({ name, label, error, invalid, className, value, onSelect, description, ...calendarProps }: DatePickerProps) {
   const [open, setOpen] = useState(false)
+  const id = useId()
+
   const isInvalid = invalid || !!error
 
   return (
     <Field className={className} data-invalid={isInvalid}>
-      {label && <FieldLabel htmlFor={name}>{label}</FieldLabel>}
+      {label && <FieldLabel htmlFor={id + name}>{label}</FieldLabel>}
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <Button
-            id={name}
+            id={id + name}
             variant={'outline'}
             className={cn('w-full pl-3 text-left font-normal', !value && 'text-muted-foreground')}
             aria-invalid={isInvalid}
@@ -240,14 +248,15 @@ export function DatePickerWrapper({ name, label, error, invalid, className, valu
 
 type ComboboxProps = BaseProps & comboboxProps
 export function ComboboxWrapper({ name, label, error, invalid, className, placeholder, value, description, onValueChange, ...rest }: ComboboxProps) {
+  const id = useId()
   const isInvalid = invalid || !!error
 
   return (
     <Field className={className} data-invalid={isInvalid}>
-      {label && <FieldLabel htmlFor={name}>{label}</FieldLabel>}
+      {label && <FieldLabel htmlFor={id + name}>{label}</FieldLabel>}
       <Combobox
         {...rest}
-        id={name}
+        id={id + name}
         value={value}
         placeholder={placeholder || `Select ${label}`}
         onValueChange={onValueChange}
@@ -261,14 +270,15 @@ export function ComboboxWrapper({ name, label, error, invalid, className, placeh
 
 type MultiSelectComboboxProps = BaseProps & multiSelectComboboxProps
 export function MultiSelectComboboxWrapper({ name, label, error, invalid, className, placeholder, value, description, onValueChange, ...rest }: MultiSelectComboboxProps) {
+  const id = useId()
   const isInvalid = invalid || !!error
 
   return (
     <Field className={className} data-invalid={isInvalid}>
-      {label && <FieldLabel htmlFor={name}>{label}</FieldLabel>}
+      {label && <FieldLabel htmlFor={id + name}>{label}</FieldLabel>}
       <MultiSelectCombobox
         {...rest}
-        id={name}
+        id={id + name}
         value={value}
         placeholder={placeholder || `Select ${label}`}
         onValueChange={onValueChange}
