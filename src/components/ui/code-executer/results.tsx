@@ -3,6 +3,7 @@ import { Trash2, CheckCircle, XCircle, AlertCircle, Trash, Minimize, Expand } fr
 
 import { outputText } from '@/utils/code-executer/output'
 import { useLogs } from './use-logs'
+import { cn } from '@/lib/utils'
 
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/shadcn-ui/card'
 import { Button } from '@/components/shadcn-ui/button'
@@ -65,8 +66,10 @@ function InputLog({ input }: inputProps) {
   )
 }
 
-type props = ReturnType<typeof useLogs>
-export function Results({ logs, clearById, clearLogs }: props) {
+type props = ReturnType<typeof useLogs> & {
+  contentCls?: string
+}
+export function Results({ logs, contentCls = "max-h-[620px]", clearById, clearLogs }: props) {
   const scrollRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -110,15 +113,15 @@ export function Results({ logs, clearById, clearLogs }: props) {
 
       <CardContent
         ref={scrollRef}
-        className="space-y-3 max-h-[620px] overflow-y-auto"
+        className={cn("space-y-3 overflow-y-auto", contentCls)}
       >
         {logs.map((log) => (
           <div
             key={log.id}
-            className={`p-3 rounded-lg border ${log?.error
+            className={cn("p-3 rounded-lg border", log?.error
               ? 'bg-red-50 border-red-200'
               : 'bg-green-50 border-green-200'
-              }`}
+            )}
           >
             <div className="flex items-center gap-2 mb-2">
               {

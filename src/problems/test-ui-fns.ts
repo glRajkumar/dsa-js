@@ -110,3 +110,23 @@ export function mixedParamsFunction(
     status,
   }
 }
+
+export function uniqueStrings(values: string[]) {
+  console.log({ values, unique: { list: [{ data: new Set(values) }] } })
+  return new Set(values)
+}
+
+export function mapUsersToAges(users: string[], ages: number[]) {
+  const result = new Map<string, number>()
+
+  if (users.length !== ages.length) {
+    throw new Error("Arrays must have the same length")
+  }
+
+  users.forEach((user, index) => {
+    result.set(user, ages[index] ?? 0)
+  })
+
+  return result
+}
+

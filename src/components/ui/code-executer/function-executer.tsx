@@ -8,6 +8,7 @@ import { captureConsole } from "@/utils/code-executer/console-capture"
 import { getFnOrCls } from "@/utils/code-executer/extractor"
 
 import { useLogs } from './use-logs'
+import { cn } from '@/lib/utils'
 
 import {
   Card,
@@ -25,9 +26,10 @@ import { Results } from './results'
 
 type props = functionMetadataT & {
   prefix?: string
+  contentCls?: string
   onExecute?: (orderedArgs: any[], data: Record<string, primOrArrOrObjT>) => void
 }
-export function FunctionExecuter({ name, params, description, isAsync, prefix = "Function", onExecute = () => { } }: props) {
+export function FunctionExecuter({ name, params, description, isAsync, prefix = "Function", contentCls = "max-h-[620px]", onExecute = () => { } }: props) {
   const hasParams = params && params.length > 0
   const schema = hasParams ? generateZodSchema(params) : z.object({})
 
@@ -67,7 +69,7 @@ export function FunctionExecuter({ name, params, description, isAsync, prefix = 
 
       {
         params && params?.length > 0 &&
-        <CardContent className="space-y-4">
+        <CardContent className={cn("space-y-4 overflow-y-auto", contentCls)}>
           <FormProvider {...methods}>
             <form
               onSubmit={methods.handleSubmit(handleSubmit)}
@@ -104,11 +106,11 @@ export function FunctionExecuterWrapper({ filePath, ...rest }: Omit<props, "onEx
         consoleLogs: consoleLogs.length > 0 ? consoleLogs : undefined
       })
 
-    } catch (error) {
+    } catch (error: any) {
       logs.addLog({
         input,
         output: "",
-        error: JSON.stringify(error),
+        error: error?.message || "Unknown error",
         consoleLogs: consoleLogs.length > 0 ? consoleLogs : undefined
       })
     } finally {

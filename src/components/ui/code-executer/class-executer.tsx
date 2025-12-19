@@ -5,13 +5,15 @@ import { captureConsole } from "@/utils/code-executer/console-capture"
 import { getFnOrCls } from "@/utils/code-executer/extractor"
 
 import { useLogs } from "./use-logs"
+import { cn } from "@/lib/utils"
 
 import { CardWrapper } from "@/components/shadcn-ui/card"
 
 import { FunctionExecuter } from "./function-executer"
 import { Results } from "./results"
 
-export function ClassExecuter({ name, construct, methods, description, filePath }: classMetadataT & { filePath: string }) {
+type props = classMetadataT & { filePath: string, contentCls?: string }
+export function ClassExecuter({ name, construct, methods, description, filePath, contentCls = "max-h-[620px]" }: props) {
   const logs = useLogs()
   const ref = useRef<any>(null)
 
@@ -30,12 +32,12 @@ export function ClassExecuter({ name, construct, methods, description, filePath 
         consoleLogs: consoleLogs.length > 0 ? consoleLogs : undefined
       })
 
-    } catch (error) {
+    } catch (error: any) {
       logs.addLog({
         input,
         name: `Constructor: ${name}`,
         output: "",
-        error: JSON.stringify(error),
+        error: error?.message || "Unknown error",
         consoleLogs: consoleLogs.length > 0 ? consoleLogs : undefined
       })
     } finally {
@@ -61,12 +63,12 @@ export function ClassExecuter({ name, construct, methods, description, filePath 
         consoleLogs: consoleLogs.length > 0 ? consoleLogs : undefined
       })
 
-    } catch (error) {
+    } catch (error: any) {
       logs.addLog({
         input,
         name: `Method: ${name}`,
         output: "",
-        error: JSON.stringify(error),
+        error: error?.message || "Unknown error",
         consoleLogs: consoleLogs.length > 0 ? consoleLogs : undefined
       })
     } finally {
@@ -80,6 +82,7 @@ export function ClassExecuter({ name, construct, methods, description, filePath 
         title={`Class: ${name}`}
         description={description}
         wrapperCls="mb-4"
+        contentCls={cn("overflow-y-auto", contentCls)}
       >
         {
           construct &&
@@ -100,6 +103,7 @@ export function ClassExecuter({ name, construct, methods, description, filePath 
                 {...param}
                 key={param.name}
                 prefix="Method"
+                contentCls="max-h-none"
                 onExecute={(a: any, b: any) => executeMethod(param.name, a, b)}
               />
             ))

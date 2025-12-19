@@ -363,5 +363,43 @@ export const metadata: jsonMetaDataT = {
         },
       ],
     },
+    uniqueStrings: {
+      type: "function",
+      name: "uniqueStrings",
+      description: "Return unique strings from an array.",
+      params: [
+        {
+          name: "values",
+          type: "array",
+          defaultValue: ["apple", "banana", "orange", "banana"],
+          constraints: {
+            template: { type: "string" }
+          }
+        },
+      ]
+    },
+    mapUsersToAges: {
+      type: "function",
+      name: "mapUsersToAges",
+      description: "Return a map of users to their ages.",
+      params: [
+        {
+          name: "users",
+          type: "array",
+          defaultValue: ["user_1", "user_2", "user_3"],
+          constraints: {
+            template: { type: "string" }
+          }
+        },
+        {
+          name: "ages",
+          type: "array",
+          defaultValue: [1, 2, 3],
+          constraints: {
+            template: { type: "number" }
+          }
+        }
+      ]
+    }
   }
 }
