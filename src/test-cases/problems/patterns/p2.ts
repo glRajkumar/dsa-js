@@ -3,21 +3,21 @@ export const metadata: jsonMetaDataT = {
   testCases: [
     {
       input: 2,
-      output: "* *\n* *"
+      output: "*\n* *"
     },
     {
       input: 3,
-      output: "* * *\n* * *\n* * *"
+      output: "*\n* *\n* * *"
     },
     {
       input: 5,
-      output: "* * * * *\n* * * * *\n* * * * *\n* * * * *\n* * * * *"
+      output: "*\n* *\n* * *\n* * * *\n* * * * *"
     }
   ],
   meta: {
-    p1_1: {
+    p2_1: {
       type: "function",
-      name: "p1_1",
+      name: "p2_1",
       params: [{
         name: "n",
         type: "number",
@@ -28,9 +28,9 @@ export const metadata: jsonMetaDataT = {
         }
       }]
     },
-    p1_2: {
+    p2_2: {
       type: "function",
-      name: "p1_2",
+      name: "p2_2",
       params: [{
         name: "n",
         type: "number",
@@ -40,6 +40,6 @@ export const metadata: jsonMetaDataT = {
           max: 24,
         }
       }]
-    }
+    },
   }
 }
