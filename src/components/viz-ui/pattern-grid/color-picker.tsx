@@ -55,7 +55,7 @@ type props = {
 }
 
 export function ColorPicker({ colors, onChange, onRemove }: props) {
-  const [newColor, setNewColor] = useState("#000")
+  const [newColor, setNewColor] = useState("#000000")
   const [newKey, setNewKey] = useState("")
   const scrollRef = useRef<HTMLSpanElement>(null)
 

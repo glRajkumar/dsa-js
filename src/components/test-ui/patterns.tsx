@@ -9,9 +9,18 @@ function Patterns() {
       />
 
       <PatternGridWithSettings
-        items={"1\n12\n123\n1234\n12345"}
-        rowSize={5}
-        colSize={5}
+        items={"4444444\n4333334\n4322234\n4321234\n4322234\n4333334\n4444444"}
+        rowSize={7}
+        colSize={7}
+      />
+
+      <PatternGridWithSettings
+        items={Array.from({ length: 180 }, (_, i) => i)}
+        rowSize={10}
+        colSize={18}
+        cellSize="compact"
+        showIndex={false}
+        enableColors
       />
     </div>
   )

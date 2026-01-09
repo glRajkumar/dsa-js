@@ -1,7 +1,8 @@
 import { CSSProperties, useId, useState } from "react"
 import { Settings } from "lucide-react"
 
-import { type CellSize, twBgClrs, sizeClasses, strToArr } from "./util"
+import { type CellSize, sizeClasses, strToArr } from "./util"
+import { getColorTone, twBgClrs } from "@/utils/colors"
 import { cn } from "@/lib/utils"
 
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/shadcn-ui/popover"
@@ -58,6 +59,13 @@ export function PatternGrid({
       {
         list.map((_, i) => {
           const val = `${list[i]}`.trim()
+          const txtTone = colors?.[val]
+            ? getColorTone(colors?.[val])
+            : bgClrs[val] ? Number(bgClrs[val].match(/\d+/)?.[0]) > 400 ? "dark" : "" : ""
+
+          const txtClr = txtTone === "dark" ? "text-white" : ""
+          const indTxt = txtTone === "dark" ? "text-white/60" : "text-black/60"
+
           return (
             <div
               key={i}
@@ -66,13 +74,14 @@ export function PatternGrid({
                 !showBorder && "border-transparent",
                 sizeClasses[cellSize as CellSize],
                 cellSize === "compact" && showIndex && "items-end justify-end",
-                bgClrs[val]
+                bgClrs[val],
+                txtClr
               )}
               style={colors?.[val] ? { "--bg-clr": colors?.[val] } as CSSProperties : {}}
             >
               {
                 showIndex && cellSize !== "small" &&
-                <span className="text-xs absolute top-0.5 left-1 text-muted-foreground">{i}</span>
+                <span className={cn("text-xs absolute top-0.5 left-1", indTxt)}>{i}</span>
               }
 
               <span className={cn("font-medium leading-none", !showValues && "hidden")}>{val}</span>
