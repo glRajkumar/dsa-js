@@ -1,30 +1,19 @@
-import { useState } from 'react'
 import { GripVertical } from "lucide-react";
 
 import { RestrictToVerticalAxis } from '@dnd-kit/abstract/modifiers';
-import { DragDropProvider, useDroppable } from "@dnd-kit/react";
 import { RestrictToElement } from '@dnd-kit/dom/modifiers';
-import { CollisionPriority } from '@dnd-kit/abstract';
 import { useSortable } from '@dnd-kit/react/sortable';
-import { move } from '@dnd-kit/helpers';
 
-import { colors, shades } from "@/utils/colors";
+import { useGridState } from './grid-state-context';
+import { Droppable } from "./droppable";
 
-function RowDroppable({ children, id }: { children: React.ReactNode, id: string }) {
-  const { ref } = useDroppable({
-    id,
-    type: id,
-    collisionPriority: CollisionPriority.Low,
-  })
-
-  return (
-    <div ref={ref}>
-      {children}
-    </div>
-  )
+type props = {
+  id: string
+  index: number
+  group: string
+  children: React.ReactNode
 }
-
-function RowDraggable({ id, index, group, children }: { id: string, index: number, group: string, children: React.ReactNode }) {
+function RowDraggable({ id, index, group, children }: props) {
   const { ref, handleRef } = useSortable({
     id,
     type: "row",
@@ -51,43 +40,40 @@ function RowDraggable({ id, index, group, children }: { id: string, index: numbe
 }
 
 export function RowProvider() {
-  const [items, setItems] = useState([...shades])
+  const { rowOrder, colOrder, cellGrid } = useGridState()
 
   return (
     <div className='absolute bottom-0 border'>
-      <DragDropProvider
-        onDragOver={(event) => {
-          setItems((items) => move(items, event))
-        }}
-      >
-        <RowDroppable id='row'>
-          <div
-            id='row-p'
-            className="w-fit border-l border-t"
-          >
-            {
-              items.map((sh, i) => (
-                <RowDraggable
-                  key={sh}
-                  id={sh}
-                  index={i}
-                  group={`row-${sh}`}
-                >
-                  {
-                    colors.map(clr => (
+      <Droppable id='row'>
+        <div
+          id='row-p'
+          className="w-fit border-l border-t"
+        >
+          {
+            rowOrder.map((sh, rowIdx) => (
+              <RowDraggable
+                key={sh}
+                id={sh}
+                index={rowIdx}
+                group={`row-${sh}`}
+              >
+                {
+                  colOrder.map((clr, colIdx) => {
+                    const cellValue = cellGrid[rowIdx]?.[colIdx] || `bg-${clr}-${sh}`
+                    return (
                       <button
-                        key={clr}
-                        title={clr}
-                        className={`size-8 border-r border-b bg-${clr}-${sh}`}
+                        key={`${clr}-${rowIdx}-${colIdx}`}
+                        title={cellValue}
+                        className={`size-8 border-r border-b ${cellValue}`}
                       />
-                    ))
-                  }
-                </RowDraggable>
-              ))
-            }
-          </div>
-        </RowDroppable>
-      </DragDropProvider>
+                    )
+                  })
+                }
+              </RowDraggable>
+            ))
+          }
+        </div>
+      </Droppable>
     </div>
   )
 }

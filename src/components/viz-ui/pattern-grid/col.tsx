@@ -1,30 +1,19 @@
-import { useState } from 'react'
 import { GripHorizontal } from "lucide-react";
 
 import { RestrictToHorizontalAxis } from '@dnd-kit/abstract/modifiers';
-import { DragDropProvider, useDroppable } from "@dnd-kit/react";
 import { RestrictToElement } from '@dnd-kit/dom/modifiers';
-import { CollisionPriority } from '@dnd-kit/abstract';
 import { useSortable } from '@dnd-kit/react/sortable';
-import { move } from '@dnd-kit/helpers';
 
-import { colors, shades } from "@/utils/colors";
+import { useGridState } from './grid-state-context';
+import { Droppable } from "./droppable";
 
-function ColDroppable({ children, id }: { children: React.ReactNode, id: string }) {
-  const { ref } = useDroppable({
-    id,
-    type: id,
-    collisionPriority: CollisionPriority.Low,
-  })
-
-  return (
-    <div ref={ref}>
-      {children}
-    </div>
-  )
+type props = {
+  id: string
+  index: number
+  group: string
+  children: React.ReactNode
 }
-
-function ColDraggable({ id, index, group, children }: { id: string, index: number, group: string, children: React.ReactNode }) {
+function ColDraggable({ id, index, group, children }: props) {
   const { ref, handleRef } = useSortable({
     id,
     type: "col",
@@ -51,41 +40,38 @@ function ColDraggable({ id, index, group, children }: { id: string, index: numbe
 }
 
 export function ColProvider() {
-  const [items, setItems] = useState([...colors])
+  const { rowOrder, colOrder, cellGrid } = useGridState()
 
   return (
     <div className='absolute right-0 border'>
-      <DragDropProvider
-        onDragOver={(event) => {
-          setItems((items) => move(items, event))
-        }}
-      >
-        <ColDroppable id="col">
-          <div
-            id='col-p'
-            className="w-fit flex border-l border-t"
-          >
-            {items.map((clr, i) => (
-              <ColDraggable
-                key={clr}
-                id={clr}
-                index={i}
-                group={`col-${clr}`}
-              >
-                {
-                  shades.map(sh => (
+      <Droppable id="col">
+        <div
+          id='col-p'
+          className="w-fit flex border-l border-t"
+        >
+          {colOrder.map((clr, colIdx) => (
+            <ColDraggable
+              key={clr}
+              id={clr}
+              index={colIdx}
+              group={`col-${clr}`}
+            >
+              {
+                rowOrder.map((sh, rowIdx) => {
+                  const cellValue = cellGrid[rowIdx]?.[colIdx] || `bg-${clr}-${sh}`
+                  return (
                     <button
-                      key={sh}
-                      title={clr}
-                      className={`size-8 border-r border-b bg-${clr}-${sh}`}
+                      key={`${sh}-${rowIdx}-${colIdx}`}
+                      title={cellValue}
+                      className={`size-8 border-r border-b ${cellValue}`}
                     />
-                  ))
-                }
-              </ColDraggable>
-            ))}
-          </div>
-        </ColDroppable>
-      </DragDropProvider>
+                  )
+                })
+              }
+            </ColDraggable>
+          ))}
+        </div>
+      </Droppable>
     </div>
   )
 }

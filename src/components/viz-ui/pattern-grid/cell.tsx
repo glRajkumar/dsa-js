@@ -1,33 +1,23 @@
-import { useState } from 'react'
-
-import { DragDropProvider, useDroppable } from "@dnd-kit/react";
 import { RestrictToElement } from '@dnd-kit/dom/modifiers';
-import { CollisionPriority } from '@dnd-kit/abstract';
 import { useSortable } from '@dnd-kit/react/sortable';
-import { move } from '@dnd-kit/helpers';
 
-import { twBgClrs } from "@/utils/colors";
+import { useGridState } from './grid-state-context';
+import { Droppable } from "./droppable";
 
-function CellDroppable({ children, id }: { children: React.ReactNode, id: string }) {
-  const { ref } = useDroppable({
-    id,
-    type: id,
-    collisionPriority: CollisionPriority.Low,
-  })
-
-  return (
-    <div ref={ref}>
-      {children}
-    </div>
-  )
+type props = {
+  id: string
+  rowIdx: number
+  colIdx: number
+  clr: string
 }
+function CellDraggable({ id, rowIdx, colIdx, clr }: props) {
+  const flatIndex = rowIdx * 19 + colIdx
 
-function CellDraggable({ id, index, group, clr }: { id: string, index: number, group: string, clr: string }) {
   const { ref } = useSortable({
     id,
     type: "cell",
-    index,
-    group,
+    index: flatIndex,
+    group: "cell",
     modifiers: [
       RestrictToElement.configure({ element: document.getElementById("cell-p") }),
     ]
@@ -43,34 +33,39 @@ function CellDraggable({ id, index, group, clr }: { id: string, index: number, g
 }
 
 export function CellProvider() {
-  const [items, setItems] = useState([...twBgClrs])
+  const { rowOrder, colOrder, cellGrid } = useGridState()
 
   return (
     <div className='absolute left-[33px] bottom-0'>
-      <DragDropProvider
-        onDragOver={(event) => {
-          setItems((items) => move(items, event))
-        }}
-      >
-        <CellDroppable id='cell'>
-          <div
-            id='cell-p'
-            className="w-fit flex flex-wrap border-l border-t"
-          >
-            {
-              items.map((clr, i) => (
-                <CellDraggable
-                  key={clr}
-                  id={clr}
-                  index={i}
-                  group={`cell`}
-                  clr={clr}
-                />
-              ))
-            }
-          </div>
-        </CellDroppable>
-      </DragDropProvider>
+      <Droppable id='cell'>
+        <div
+          id='cell-p'
+          className="w-fit border-l border-t"
+          style={{
+            display: 'grid',
+            gridTemplateColumns: `repeat(${colOrder.length}, 1fr)`,
+            gridTemplateRows: `repeat(${rowOrder.length}, 1fr)`,
+          }}
+        >
+          {
+            rowOrder.map((shade, rowIdx) =>
+              colOrder.map((color, colIdx) => {
+                const cellValue = cellGrid[rowIdx]?.[colIdx] || `bg-${color}-${shade}`
+                const cellId = `bg-${color}-${shade}`
+                return (
+                  <CellDraggable
+                    key={`${rowIdx}-${colIdx}-${cellId}`}
+                    id={cellId}
+                    rowIdx={rowIdx}
+                    colIdx={colIdx}
+                    clr={cellValue}
+                  />
+                )
+              })
+            )
+          }
+        </div>
+      </Droppable>
     </div>
   )
 }
