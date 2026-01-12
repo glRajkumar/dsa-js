@@ -24,7 +24,7 @@ function Footer() {
   )
 }
 
-export function ColorsGrid({ children, className }: { children?: React.ReactNode, className?: string }) {
+export function ColorsSystem({ children, className }: { children?: React.ReactNode, className?: string }) {
   return (
     <GridStateProvider>
       <div className={cn("max-h-[70vh] overflow-y-auto pr-6 -mr-6", className)}>
@@ -38,7 +38,7 @@ export function ColorsGrid({ children, className }: { children?: React.ReactNode
   )
 }
 
-export function ColorsGridModal() {
+export function ColorsSystemModal() {
   return (
     <DialogWrapper
       title="Color System"
@@ -46,9 +46,9 @@ export function ColorsGridModal() {
       contentCls="sm:max-w-3xl"
       cancel=""
     >
-      <ColorsGrid>
+      <ColorsSystem>
         <Footer />
-      </ColorsGrid>
+      </ColorsSystem>
     </DialogWrapper>
   )
 }
