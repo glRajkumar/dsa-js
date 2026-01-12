@@ -3,12 +3,11 @@ import { DragDropProvider } from "@dnd-kit/react";
 import { move } from '@dnd-kit/helpers';
 
 import { GridStateProvider, useGridState } from './grid-state-context';
-import { CellProvider } from './cell';
 import { RowProvider } from './row';
 import { ColProvider } from './col';
 
 function DragHandler() {
-  const { rowOrder, colOrder, moveRow, moveCol, moveCell } = useGridState()
+  const { rowOrder, colOrder, moveRow, moveCol } = useGridState()
 
   const handleDragOver = (event: Parameters<typeof move>[1]) => {
     const activeId = event.operation.source?.id.toString()
@@ -36,28 +35,6 @@ function DragHandler() {
       }
       return
     }
-
-    if (activeType === 'cell') {
-      let fromRow = -1, fromCol = -1, toRow = -1, toCol = -1
-
-      rowOrder.forEach((shade, rowIdx) => {
-        colOrder.forEach((color, colIdx) => {
-          const positionId = `bg-${color}-${shade}`
-          if (positionId === activeId) {
-            fromRow = rowIdx
-            fromCol = colIdx
-          }
-          if (positionId === overId) {
-            toRow = rowIdx
-            toCol = colIdx
-          }
-        })
-      })
-
-      if (fromRow !== -1 && fromCol !== -1 && toRow !== -1 && toCol !== -1) {
-        moveCell(fromRow, fromCol, toRow, toCol)
-      }
-    }
   }
 
   return (
@@ -70,7 +47,6 @@ function DragHandler() {
       >
         <RowProvider />
         <ColProvider />
-        <CellProvider />
       </div>
     </DragDropProvider>
   )

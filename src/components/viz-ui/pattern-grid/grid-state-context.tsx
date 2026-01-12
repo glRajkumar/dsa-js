@@ -10,9 +10,6 @@ interface GridState {
 interface GridStateContextValue extends GridState {
   moveRow: (fromIndex: number, toIndex: number) => void
   moveCol: (fromIndex: number, toIndex: number) => void
-  moveCell: (fromRow: number, fromCol: number, toRow: number, toCol: number) => void
-  getCellAt: (rowIdx: number, colIdx: number) => bgT | undefined
-  setCellAt: (rowIdx: number, colIdx: number, value: bgT) => void
 }
 
 const GridStateContext = createContext<GridStateContextValue | null>(null)
@@ -73,48 +70,12 @@ export function GridStateProvider({ children }: { children: ReactNode }) {
     })
   }, [])
 
-  const moveCell = useCallback((fromRow: number, fromCol: number, toRow: number, toCol: number) => {
-    if (fromRow === toRow && fromCol === toCol) return
-
-    setState(prev => {
-      const newCellGrid = prev.cellGrid.map(row => [...row])
-      const temp = newCellGrid[fromRow][fromCol]
-      newCellGrid[fromRow][fromCol] = newCellGrid[toRow][toCol]
-      newCellGrid[toRow][toCol] = temp
-
-      return {
-        ...prev,
-        cellGrid: newCellGrid,
-      }
-    })
-  }, [])
-
-  const getCellAt = useCallback((rowIdx: number, colIdx: number) => {
-    return state.cellGrid[rowIdx]?.[colIdx]
-  }, [state.cellGrid])
-
-  const setCellAt = useCallback((rowIdx: number, colIdx: number, value: bgT) => {
-    setState(prev => {
-      const newCellGrid = prev.cellGrid.map(row => [...row])
-      if (newCellGrid[rowIdx]) {
-        newCellGrid[rowIdx][colIdx] = value
-      }
-      return {
-        ...prev,
-        cellGrid: newCellGrid,
-      }
-    })
-  }, [])
-
   return (
     <GridStateContext.Provider
       value={{
         ...state,
         moveRow,
         moveCol,
-        moveCell,
-        getCellAt,
-        setCellAt,
       }}
     >
       {children}
