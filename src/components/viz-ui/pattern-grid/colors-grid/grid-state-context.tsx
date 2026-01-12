@@ -10,6 +10,8 @@ type State = {
   excludedRows: Set<shadesT>
   excludedCols: Set<colorsT>
   flow: flowT
+  colorsStart: colorsT
+  shadesStart: shadesT
 }
 
 type Action =
@@ -19,6 +21,8 @@ type Action =
   | { type: 'TOGGLE_ROW'; shade: shadesT }
   | { type: 'TOGGLE_COL'; color: colorsT }
   | { type: 'UPDATE_FLOW'; flow: flowT }
+  | { type: 'UPDATE_COLORS_START'; colorsStart: colorsT }
+  | { type: 'UPDATE_SHADES_START'; shadesStart: shadesT }
   | { type: 'RESET' }
 
 type GridStateContextValue = State & {
@@ -31,10 +35,19 @@ type GridStateContextValue = State & {
   toggleCol: (c: colorsT) => void
   toggleRow: (s: shadesT) => void
   updateFlow: (f: flowT) => void
+  updateColorsStart: (c: colorsT) => void
+  updateShadesStart: (s: shadesT) => void
   reset: () => void
 }
 
 const GridStateContext = createContext<GridStateContextValue | null>(null)
+
+function startArrayBy<T>(arr: readonly T[], startBy: T): T[] {
+  const index = arr.indexOf(startBy)
+
+  if (index === -1) return [...arr]
+  return [...arr.slice(index), ...arr.slice(0, index)]
+}
 
 function initializeState(): State {
   const rowOrder = [...shades]
@@ -48,6 +61,8 @@ function initializeState(): State {
     rowOrder,
     colOrder,
     cellGrid,
+    colorsStart: colors[0],
+    shadesStart: shades[0],
     excludedCells: new Set(),
     excludedRows: new Set(),
     excludedCols: new Set(),
@@ -187,6 +202,40 @@ function reducer(state: State, action: Action): State {
     case 'UPDATE_FLOW':
       return { ...state, flow: action.flow }
 
+    case 'UPDATE_COLORS_START': {
+      const colorsStartArr = startArrayBy<colorsT>(colors, action.colorsStart)
+      const rowOrder = [...state.rowOrder]
+      const colOrder = [...colorsStartArr]
+      const cellGrid: bgT[][] = rowOrder.map(shade =>
+        colOrder.map(color => `bg-${color}-${shade}` as bgT)
+      )
+
+      return {
+        ...state,
+        colorsStart: action.colorsStart,
+        rowOrder,
+        colOrder,
+        cellGrid,
+      }
+    }
+
+    case 'UPDATE_SHADES_START': {
+      const shadesStartArr = startArrayBy<shadesT>(shades, action.shadesStart)
+      const rowOrder = [...shadesStartArr]
+      const colOrder = [...state.colOrder]
+      const cellGrid: bgT[][] = rowOrder.map(shade =>
+        colOrder.map(color => `bg-${color}-${shade}` as bgT)
+      )
+
+      return {
+        ...state,
+        shadesStart: action.shadesStart,
+        rowOrder,
+        colOrder,
+        cellGrid,
+      }
+    }
+
     default:
       return state
   }
@@ -209,6 +258,9 @@ export function GridStateProvider({ children }: { children: ReactNode }) {
   const isRowExcluded = (shade: shadesT) => state.excludedRows.has(shade)
   const isColExcluded = (color: colorsT) => state.excludedCols.has(color)
 
+  const updateColorsStart = (colorsStart: colorsT) => dispatch({ type: 'UPDATE_COLORS_START', colorsStart })
+  const updateShadesStart = (shadesStart: shadesT) => dispatch({ type: 'UPDATE_SHADES_START', shadesStart })
+
   const updateFlow = (flow: flowT) => dispatch({ type: 'UPDATE_FLOW', flow })
   const reset = () => dispatch({ type: 'RESET' })
 
@@ -224,6 +276,8 @@ export function GridStateProvider({ children }: { children: ReactNode }) {
         toggleCell,
         toggleCol,
         toggleRow,
+        updateColorsStart,
+        updateShadesStart,
         updateFlow,
         reset,
       }}

@@ -53,7 +53,7 @@ export function Output() {
 
   return (
     <>
-      <div className="mb-4 text-lg font-medium">Output Sample</div>
+      <h6 className="mb-4 text-lg font-medium">Output Sample</h6>
 
       <div className="mb-4 flex items-center flex-wrap gap-4">
         <div className="flex items-center gap-4">
