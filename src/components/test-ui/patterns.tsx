@@ -5,17 +5,20 @@ function Patterns() {
   return (
     <div className="space-y-8">
       <PatternGridWithSettings
+        id="test-ui-1"
         items={[1, 2, 3, 4, 5, 6, 7, 8, 9]}
         size={3}
       />
 
       <PatternGridWithSettings
+        id="test-ui-2"
         items={"4444444\n4333334\n4322234\n4321234\n4322234\n4333334\n4444444"}
         rowSize={7}
         colSize={7}
       />
 
       <PatternGridWithSettings
+        id="test-ui-3"
         items={Array.from({ length: colors.length * shades.length }, (_, i) => i)}
         rowSize={shades.length}
         colSize={colors.length}

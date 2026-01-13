@@ -1,55 +1,18 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 
-import { useExcludedCheck, useGridData } from "./grid-store";
-import { type bgT } from "@/utils/colors";
+import { useBgClrs, useGridData } from "./grid-store";
 import { cn } from "@/lib/utils";
 
 import { Input } from "@/components/shadcn-ui/input";
 import { Label } from "@/components/shadcn-ui/label";
 
 export function Output({ id }: { id: string }) {
-  const { isCellExcluded, isColExcluded, isRowExcluded } = useExcludedCheck(id)
   const colOrder = useGridData(id, s => s?.colOrder)
   const rowOrder = useGridData(id, s => s?.rowOrder)
-  const flow = useGridData(id, s => s?.flow)
+  const list = useBgClrs(id)
 
   const [col, setCol] = useState(colOrder.length)
   const [row, setRow] = useState(rowOrder.length)
-
-  const list = useMemo(() => {
-    const final: bgT[] = []
-
-    if (flow === "row") {
-      rowOrder.forEach(sh => {
-        if (!isRowExcluded(sh)) {
-          colOrder.forEach(clr => {
-            if (!isColExcluded(clr)) {
-              if (!isCellExcluded(clr, sh)) {
-                const twc = `bg-${clr}-${sh}` as bgT
-                final.push(twc)
-              }
-            }
-          })
-        }
-      })
-    }
-    else {
-      colOrder.forEach(clr => {
-        if (!isColExcluded(clr)) {
-          rowOrder.forEach(sh => {
-            if (!isRowExcluded(sh)) {
-              if (!isCellExcluded(clr, sh)) {
-                const twc = `bg-${clr}-${sh}` as bgT
-                final.push(twc)
-              }
-            }
-          })
-        }
-      })
-    }
-
-    return final
-  }, [colOrder, rowOrder, flow, isRowExcluded, isColExcluded, isCellExcluded])
 
   return (
     <>
@@ -79,6 +42,8 @@ export function Output({ id }: { id: string }) {
             onChange={e => setCol(e.target.valueAsNumber)}
           />
         </div>
+
+        <span className="text-sm text-muted-foreground">Colors used row wise {`->`}</span>
       </div>
 
       <div className="overflow-x-auto">

@@ -1,8 +1,9 @@
-import { CSSProperties, useId, useState } from "react"
+import { CSSProperties, useMemo, useState } from "react"
 import { Settings } from "lucide-react"
 
 import { type CellSize, sizeClasses, strToArr } from "./util"
-import { getColorTone, twBgClrs } from "@/utils/colors"
+import { useBgClrs, useGridStore } from "./color-system/grid-store"
+import { getColorTone } from "@/utils/colors"
 import { cn } from "@/lib/utils"
 
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/shadcn-ui/popover"
@@ -29,25 +30,34 @@ type baseProps = {
 export function PatternGrid({
   items, colors, showIndex = true, cellSize = "large",
   showBorder = true, showValues = true, enableColors = false,
-  ...rest
-}: baseProps & { colors?: Record<string, string> }) {
+  clrSysId = "global", ...rest
+}: baseProps & { colors?: Record<string, string>; clrSysId?: string }) {
+  const twBgClrs = useBgClrs(clrSysId)
   const row = (rest.size || rest.rowSize)!
   const col = (rest.size || rest.colSize)!
-  const total = row * col
 
-  const itemsSplited = typeof items === "string" ? strToArr(items) : items
-  const list = itemsSplited.length !== total ? [...itemsSplited, ...Array(total - itemsSplited.length).fill("")] : itemsSplited
+  const list = useMemo(() => {
+    const total = row * col
+    const itemsSplited = typeof items === "string" ? strToArr(items) : items
+    return itemsSplited.length !== total
+      ? [...itemsSplited, ...Array(total - itemsSplited.length).fill("")]
+      : itemsSplited
+  }, [row, col, items])
 
-  const bgClrs = enableColors ? list.reduce<Record<string, string>>((prev, curr) => {
-    const val = `${curr}`.trim()
-    if (!val) return prev
+  const bgClrs = useMemo(() => {
+    if (!enableColors) return {}
 
-    if (!prev[val]) {
-      const len = Object.keys(prev).length
-      prev[val] = colors?.[val] ? "bg-[var(--bg-clr)]" : twBgClrs[len]
-    }
-    return prev
-  }, {}) : {}
+    return list.reduce<Record<string, string>>((prev, curr) => {
+      const val = `${curr}`.trim()
+      if (!val) return prev
+
+      if (!prev[val]) {
+        const len = Object.keys(prev).length
+        prev[val] = colors?.[val] ? "bg-[var(--bg-clr)]" : `${twBgClrs[len]}`
+      }
+      return prev
+    }, {})
+  }, [list, enableColors, twBgClrs])
 
   return (
     <div
@@ -94,14 +104,18 @@ export function PatternGrid({
   )
 }
 
-export function PatternGridWithSettings(props: baseProps) {
+export function PatternGridWithSettings(props: baseProps & { id: string }) {
+  const remove = useGridStore(s => s.remove)
+  const init = useGridStore(s => s.init)
+
+  const [colorSystemType, setColorSystemType] = useState<"global" | "own">("global")
   const [enableColors, setEnableColors] = useState(props.enableColors ?? false)
   const [showBorder, setShowBorder] = useState(props.showBorder ?? true)
   const [showValues, setShowValues] = useState(props.showValues ?? true)
   const [showIndex, setShowIndex] = useState(props.showIndex ?? true)
   const [cellSize, setCellSize] = useState<CellSize>(props.cellSize || "large")
   const [colors, setColors] = useState<Record<string, string>>({})
-  const id = useId()
+  const id = props.id
 
   function onChangeClr(key: string, val: string) {
     setColors(prev => ({
@@ -118,10 +132,17 @@ export function PatternGridWithSettings(props: baseProps) {
     })
   }
 
+  function onChangeClrSysTye(v: "global" | "own") {
+    if (v === "global") remove(id)
+    else init(id)
+    setColorSystemType(v)
+  }
+
   return (
     <div className="flex flex-wrap items-end gap-2">
       <PatternGrid
         {...props}
+        clrSysId={colorSystemType === "global" ? "global" : props.id}
         colors={colors}
         cellSize={cellSize}
         showIndex={showIndex}
@@ -137,9 +158,9 @@ export function PatternGridWithSettings(props: baseProps) {
           </Button>
         </PopoverTrigger>
 
-        <PopoverContent className="w-48 space-y-4" side="top" align="start">
+        <PopoverContent className="w-60 space-y-4" side="top" align="start">
           <div>
-            <Label htmlFor={`${id}-cell`} className="text-sm">Cell Size</Label>
+            <Label htmlFor={`${id}-cell`} className="mb-0.5 text-sm">Cell Size</Label>
             <SelectWrapper
               id={`${id}-cell`}
               value={cellSize}
@@ -168,18 +189,47 @@ export function PatternGridWithSettings(props: baseProps) {
             <Checkbox id={`${id}-colors`} checked={enableColors} onCheckedChange={() => setEnableColors(s => !s)} />
             <Label htmlFor={`${id}-colors`}>Enable Cell Colors</Label>
           </div>
+
+          {
+            enableColors &&
+            <div>
+              <Label htmlFor={`${id}-color-system-type`} className="mb-0.5 text-sm">Color System Type</Label>
+              <SelectWrapper
+                id={`${id}-color-system-type`}
+                value={colorSystemType}
+                onValueChange={onChangeClrSysTye}
+                options={["global", "own"]}
+                itemCls="capitalize"
+              />
+
+              {
+                colorSystemType === "global" &&
+                <span className="text-[10px] text-muted-foreground">
+                  You can edit color system at global settings
+                </span>
+              }
+            </div>
+          }
         </PopoverContent>
       </Popover>
 
-      {enableColors &&
-        <ColorPicker
-          colors={colors}
-          onChange={onChangeClr}
-          onRemove={onRemoveClr}
-        />
-      }
+      {
+        enableColors &&
+        <>
+          <ColorPicker
+            colors={colors}
+            onChange={onChangeClr}
+            onRemove={onRemoveClr}
+          />
 
-      <ColorsSystemModal id={id} />
+          {
+            colorSystemType === "own" &&
+            <ColorsSystemModal
+              id={id}
+            />
+          }
+        </>
+      }
     </div>
   )
 }

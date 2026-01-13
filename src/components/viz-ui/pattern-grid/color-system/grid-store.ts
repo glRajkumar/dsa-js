@@ -1,4 +1,5 @@
 import { useShallow } from 'zustand/shallow'
+import { persist } from 'zustand/middleware'
 import { create } from 'zustand'
 
 import type { colorsT, shadesT, bgT } from '@/utils/colors'
@@ -10,18 +11,19 @@ type GridState = {
   flow: flowT
   rowOrder: shadesT[]
   colOrder: colorsT[]
-  cellGrid: bgT[][]
   colorsStart: colorsT
   shadesStart: shadesT
-  excludedRows: Set<shadesT>
-  excludedCols: Set<colorsT>
-  excludedCells: Set<bgT>
+  excludedRows: shadesT[]
+  excludedCols: colorsT[]
+  excludedCells: bgT[]
 }
+
+type initOptT = Omit<GridState, "rowOrder" | "colOrder">
 
 type GridStore = {
   grids: Record<string, GridState>
 
-  init: (id: string) => void
+  init: (id: string, o?: Partial<initOptT>) => void
   reset: (id: string) => void
   remove: (id: string) => void
 
@@ -42,35 +44,53 @@ function startArrayBy<T>(arr: readonly T[], startBy: T): T[] {
   return idx === -1 ? [...arr] : [...arr.slice(idx), ...arr.slice(0, idx)]
 }
 
-function toggleInSet<T>(set: Set<T>, item: T) {
-  const next = new Set(set)
-  next.has(item) ? next.delete(item) : next.add(item)
-  return next
-}
-
-function createInitialGrid(): GridState {
-  const rowOrder = [...shades]
-  const colOrder = [...colors]
-  const cellGrid = rowOrder.map(s => colOrder.map(c => `bg-${c}-${s}` as bgT))
-
-  return {
-    flow: 'row',
-    rowOrder,
-    colOrder,
-    cellGrid,
-    colorsStart: colOrder[0],
-    shadesStart: rowOrder[0],
-    excludedCells: new Set(),
-    excludedRows: new Set(),
-    excludedCols: new Set(),
+function toggleInArray<T>(arr: T[], item: T): T[] {
+  const idx = arr.indexOf(item)
+  if (idx === -1) {
+    return [...arr, item]
+  } else {
+    return arr.filter(x => x !== item)
   }
 }
 
-export const useGridStore = create<GridStore>((set) => ({
-  grids: {},
+function addToArray<T>(arr: T[], item: T): T[] {
+  if (arr.includes(item)) return arr
+  return [...arr, item]
+}
 
-  init: id => set(s =>
-    s.grids[id] ? s : { grids: { ...s.grids, [id]: createInitialGrid() } }
+function removeFromArray<T>(arr: T[], item: T): T[] {
+  return arr.filter(x => x !== item)
+}
+
+function createInitialGrid(option?: Partial<initOptT>): GridState {
+  const {
+    flow = "row", colorsStart = "red", shadesStart = "100",
+    excludedCells = [], excludedRows = [],
+    excludedCols = [],
+  } = option || {}
+
+  const rowOrder = startArrayBy([...shades], shadesStart)
+  const colOrder = startArrayBy([...colors], colorsStart)
+
+  return {
+    flow,
+    rowOrder,
+    colOrder,
+    colorsStart,
+    shadesStart,
+    excludedCells,
+    excludedRows,
+    excludedCols,
+  }
+}
+
+export const useGridStore = create<GridStore>()(persist((set) => ({
+  grids: {
+    global: createInitialGrid({ shadesStart: "400" }),
+  },
+
+  init: (id, opts) => set(s =>
+    s.grids[id] ? s : { grids: { ...s.grids, [id]: createInitialGrid(opts) } }
   ),
 
   reset: id => set(s => ({
@@ -88,15 +108,11 @@ export const useGridStore = create<GridStore>((set) => ({
     if (!g || from === to) return s
 
     const rowOrder = [...g.rowOrder]
-    const cellGrid = [...g.cellGrid]
 
     const [r] = rowOrder.splice(from, 1)
-    const [cg] = cellGrid.splice(from, 1)
-
     rowOrder.splice(to, 0, r)
-    cellGrid.splice(to, 0, cg)
 
-    return { grids: { ...s.grids, [id]: { ...g, rowOrder, cellGrid } } }
+    return { grids: { ...s.grids, [id]: { ...g, rowOrder } } }
   }),
 
   moveCol: (id, from, to) => set(s => {
@@ -107,59 +123,54 @@ export const useGridStore = create<GridStore>((set) => ({
     const [c] = colOrder.splice(from, 1)
     colOrder.splice(to, 0, c)
 
-    const cellGrid = g.cellGrid.map((row) => {
-      const r = [...row]
-      const [cell] = r.splice(from, 1)
-      r.splice(to, 0, cell)
-      return r
-    })
-
-    return { grids: { ...s.grids, [id]: { ...g, colOrder, cellGrid } } }
+    return { grids: { ...s.grids, [id]: { ...g, colOrder } } }
   }),
 
   toggleCell: (id, cell) => set(s => {
     const g = s.grids[id]
     if (!g) return s
 
-    const wasExcluded = g.excludedCells.has(cell)
-    const excludedCells = toggleInSet(g.excludedCells, cell)
-    const isExcludedNow = excludedCells.has(cell)
+    const wasExcluded = g.excludedCells.includes(cell)
+    let excludedCells = toggleInArray(g.excludedCells, cell)
+    const isExcludedNow = excludedCells.includes(cell)
 
-    const nextExcludedRows = new Set(g.excludedRows)
-    const nextExcludedCols = new Set(g.excludedCols)
+    let nextExcludedRows = [...g.excludedRows]
+    let nextExcludedCols = [...g.excludedCols]
 
     const parts = cell.split('-')
     const color = parts[1] as colorsT
     const shade = parts[2] as shadesT
 
     if (!wasExcluded && isExcludedNow) {
-      const fullRow = g.colOrder.every(col => excludedCells.has(`bg-${col}-${shade}` as bgT))
+      const fullRow = g.colOrder.every(col => excludedCells.includes(`bg-${col}-${shade}` as bgT))
       if (fullRow) {
-        nextExcludedRows.add(shade)
-        for (const col of g.colOrder) excludedCells.delete(`bg-${col}-${shade}` as bgT)
+        nextExcludedRows = addToArray(nextExcludedRows, shade)
+        excludedCells = g.colOrder.reduce((acc, col) =>
+          removeFromArray(acc, `bg-${col}-${shade}` as bgT), excludedCells)
       }
 
-      const fullCol = g.rowOrder.every(rShade => excludedCells.has(`bg-${color}-${rShade}` as bgT))
+      const fullCol = g.rowOrder.every(rShade => excludedCells.includes(`bg-${color}-${rShade}` as bgT))
       if (fullCol) {
-        nextExcludedCols.add(color)
-        for (const rShade of g.rowOrder) excludedCells.delete(`bg-${color}-${rShade}` as bgT)
+        nextExcludedCols = addToArray(nextExcludedCols, color)
+        excludedCells = g.rowOrder.reduce((acc, rShade) =>
+          removeFromArray(acc, `bg-${color}-${rShade}` as bgT), excludedCells)
       }
     }
 
     if (wasExcluded && !isExcludedNow) {
-      if (g.excludedRows.has(shade)) {
-        nextExcludedRows.delete(shade)
+      if (g.excludedRows.includes(shade)) {
+        nextExcludedRows = removeFromArray(nextExcludedRows, shade)
         for (const col of g.colOrder) {
           const cellStr = `bg-${col}-${shade}` as bgT
-          if (col !== color) excludedCells.add(cellStr)
+          if (col !== color) excludedCells = addToArray(excludedCells, cellStr)
         }
       }
 
-      if (g.excludedCols.has(color)) {
-        nextExcludedCols.delete(color)
+      if (g.excludedCols.includes(color)) {
+        nextExcludedCols = removeFromArray(nextExcludedCols, color)
         for (const rShade of g.rowOrder) {
           const cellStr = `bg-${color}-${rShade}` as bgT
-          if (rShade !== shade) excludedCells.add(cellStr)
+          if (rShade !== shade) excludedCells = addToArray(excludedCells, cellStr)
         }
       }
     }
@@ -181,14 +192,10 @@ export const useGridStore = create<GridStore>((set) => ({
     const g = s.grids[id]
     if (!g) return s
 
-    const willExclude = !g.excludedRows.has(shade)
-    let nextExcludedCells = new Set(g.excludedCells)
+    const willExclude = !g.excludedRows.includes(shade)
+    let nextExcludedCells = [...g.excludedCells]
     if (willExclude) {
-      for (const cell of g.excludedCells) {
-        if (cell.endsWith(`-${shade}`)) {
-          nextExcludedCells.delete(cell)
-        }
-      }
+      nextExcludedCells = nextExcludedCells.filter(cell => !cell.endsWith(`-${shade}`))
     }
 
     return {
@@ -196,7 +203,7 @@ export const useGridStore = create<GridStore>((set) => ({
         ...s.grids,
         [id]: {
           ...g,
-          excludedRows: toggleInSet(g.excludedRows, shade),
+          excludedRows: toggleInArray(g.excludedRows, shade),
           excludedCells: nextExcludedCells,
         },
       },
@@ -207,14 +214,10 @@ export const useGridStore = create<GridStore>((set) => ({
     const g = s.grids[id]
     if (!g) return s
 
-    const willExclude = !g.excludedCols.has(color)
-    let nextExcludedCells = new Set(g.excludedCells)
+    const willExclude = !g.excludedCols.includes(color)
+    let nextExcludedCells = [...g.excludedCells]
     if (willExclude) {
-      for (const cell of g.excludedCells) {
-        if (cell.startsWith(`bg-${color}-`)) {
-          nextExcludedCells.delete(cell)
-        }
-      }
+      nextExcludedCells = nextExcludedCells.filter(cell => !cell.startsWith(`bg-${color}-`))
     }
 
     return {
@@ -222,7 +225,7 @@ export const useGridStore = create<GridStore>((set) => ({
         ...s.grids,
         [id]: {
           ...g,
-          excludedCols: toggleInSet(g.excludedCols, color),
+          excludedCols: toggleInArray(g.excludedCols, color),
           excludedCells: nextExcludedCells,
         },
       },
@@ -238,14 +241,11 @@ export const useGridStore = create<GridStore>((set) => ({
     if (!g) return s
 
     const colOrder = startArrayBy(colors, color)
-    const cellGrid = g.rowOrder.map(s =>
-      colOrder.map((c) => `bg-${c}-${s}` as bgT)
-    )
 
     return {
       grids: {
         ...s.grids,
-        [id]: { ...g, colorsStart: color, colOrder, cellGrid },
+        [id]: { ...g, colorsStart: color, colOrder },
       },
     }
   }),
@@ -255,31 +255,69 @@ export const useGridStore = create<GridStore>((set) => ({
     if (!g) return s
 
     const rowOrder = startArrayBy(shades, shade)
-    const cellGrid = rowOrder.map(s =>
-      g.colOrder.map((c) => `bg-${c}-${s}` as bgT)
-    )
 
     return {
       grids: {
         ...s.grids,
-        [id]: { ...g, shadesStart: shade, rowOrder, cellGrid },
+        [id]: { ...g, shadesStart: shade, rowOrder },
       },
     }
   }),
-}))
+}), { name: "colors-sytem" }))
 
 export function useGridData<T>(id: string, selector: (s: GridState) => T) {
   return useGridStore(useShallow(s => selector(s?.grids?.[id])))
 }
+
+export function useBgClrs(id: string) {
+  return useGridStore(useShallow(s => {
+    const g = s.grids[id]
+    if (!g) return []
+
+    const final: bgT[] = []
+
+    if (g.flow === "row") {
+      g.rowOrder.forEach(sh => {
+        if (!g.excludedRows.includes(sh)) {
+          g.colOrder.forEach(clr => {
+            if (!g.excludedCols.includes(clr)) {
+              const twc = `bg-${clr}-${sh}` as bgT
+              if (!g.excludedCells.includes(twc)) {
+                final.push(twc)
+              }
+            }
+          })
+        }
+      })
+    }
+    else {
+      g.colOrder.forEach(clr => {
+        if (!g.excludedCols.includes(clr)) {
+          g.rowOrder.forEach(sh => {
+            if (!g.excludedRows.includes(sh)) {
+              const twc = `bg-${clr}-${sh}` as bgT
+              if (!g.excludedCells.includes(twc)) {
+                final.push(twc)
+              }
+            }
+          })
+        }
+      })
+    }
+
+    return final
+  }))
+}
+
 
 export function useExcludedCheck(id: string) {
   const excludedCells = useGridData(id, s => s?.excludedCells)
   const excludedRows = useGridData(id, s => s?.excludedRows)
   const excludedCols = useGridData(id, s => s?.excludedCols)
 
-  const isCellExcluded = (c: colorsT, s: shadesT) => excludedCells.has(`bg-${c}-${s}` as bgT)
-  const isRowExcluded = (s: shadesT) => excludedRows.has(s)
-  const isColExcluded = (c: colorsT) => excludedCols.has(c)
+  const isCellExcluded = (c: colorsT, s: shadesT) => excludedCells.includes(`bg-${c}-${s}` as bgT)
+  const isRowExcluded = (s: shadesT) => excludedRows.includes(s)
+  const isColExcluded = (c: colorsT) => excludedCols.includes(c)
 
   return {
     isCellExcluded,

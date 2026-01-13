@@ -19,7 +19,6 @@ export function Droppable({ children, id }: props) {
 export function DropOverLay({ id }: { id: string }) {
   const colOrder = useGridData(id, s => s?.colOrder)
   const rowOrder = useGridData(id, s => s?.rowOrder)
-  const cellGrid = useGridData(id, s => s?.cellGrid)
 
   return (
     <DragOverlay>
@@ -28,7 +27,7 @@ export function DropOverLay({ id }: { id: string }) {
         const isCol = source.type === "col"
 
         const i = isCol ? colOrder.findIndex(f => f === id) : rowOrder.findIndex(f => f === id)
-        const items = isCol ? cellGrid.map(r => r[i]) : cellGrid[i]
+        const items = isCol ? rowOrder.map(r => `bg-${colOrder[i]}-${r}`) : colOrder.map(r => `bg-${r}-${rowOrder[i]}`)
 
         return (
           <div className={`flex items-center w-fit bg-white border ${isCol ? "flex-col border-b-0" : "border-r-0"}`}>
