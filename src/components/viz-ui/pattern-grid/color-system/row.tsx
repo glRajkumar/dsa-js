@@ -4,7 +4,7 @@ import { RestrictToVerticalAxis } from '@dnd-kit/abstract/modifiers';
 import { RestrictToElement } from '@dnd-kit/dom/modifiers';
 import { useSortable } from '@dnd-kit/react/sortable';
 
-import { useGridStore } from './grid-store';
+import { useGridData } from './grid-store';
 import { Droppable } from "./common";
 
 type props = {
@@ -35,7 +35,7 @@ function RowDraggable({ id, index, group }: props) {
 }
 
 export function RowProvider({ id }: { id: string }) {
-  const rowOrder = useGridStore(s => s.grids?.[id]?.rowOrder)
+  const rowOrder = useGridData(id, s => s?.rowOrder)
 
   return (
     <Droppable id='row'>

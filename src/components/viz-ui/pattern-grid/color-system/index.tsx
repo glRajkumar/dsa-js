@@ -1,7 +1,8 @@
+import { useState } from "react";
 import { DialogFooterWrapper, DialogWrapper } from "@/components/shadcn-ui/dialog"
 import { Button } from "@/components/shadcn-ui/button"
 
-import { useGridStore } from "./grid-store";
+import { useGridData, useGridStore } from "./grid-store";
 import { cn } from "@/lib/utils";
 
 import { GridReorder } from './grid-reorder';
@@ -9,7 +10,7 @@ import { Settings } from "./settings";
 import { Output } from "./output";
 
 function Footer({ id }: { id: string }) {
-  const rowOrder = useGridStore(s => s.grids?.[id]?.rowOrder)
+  const rowOrder = useGridData(id, s => s?.rowOrder)
 
   function onSave() {
     console.log(rowOrder)
@@ -43,13 +44,35 @@ export function ColorsSystem({ id, children, className }: props) {
   )
 }
 
+function Btn({ id, onOpen }: { id: string; onOpen: () => void }) {
+  const init = useGridStore(s => s.init)
+
+  return (
+    <Button
+      variant="outline"
+      size="sm"
+      onClick={() => {
+        init(id)
+        onOpen()
+      }}
+    >
+      Color System
+    </Button>
+  )
+}
+
 export function ColorsSystemModal({ id }: { id: string }) {
+  const [open, setOpen] = useState(false)
+
   return (
     <DialogWrapper
+      open={open}
       title="Color System"
-      trigger={<Button variant="outline" size="sm">Color System</Button>}
+      // trigger={<Button variant="outline" size="sm">Color System</Button>}
+      trigger={<Btn id={id} onOpen={() => setOpen(true)} />}
       contentCls="sm:max-w-3xl"
       cancel=""
+      onOpenChange={setOpen}
     >
       <ColorsSystem id={id}>
         <Footer id={id} />

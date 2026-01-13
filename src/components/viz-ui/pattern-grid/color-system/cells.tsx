@@ -2,12 +2,12 @@ import { Fragment } from "react";
 
 import type { bgT } from "@/utils/colors";
 
-import { useExcludedCheck, useGridStore } from "./grid-store";
+import { useExcludedCheck, useGridData, useGridStore } from "./grid-store";
 import { cn } from "@/lib/utils";
 
 export function Cells({ id }: { id: string }) {
-  const colOrder = useGridStore(s => s.grids?.[id]?.colOrder)
-  const rowOrder = useGridStore(s => s.grids?.[id]?.rowOrder)
+  const colOrder = useGridData(id, s => s?.colOrder)
+  const rowOrder = useGridData(id, s => s?.rowOrder)
 
   const { isCellExcluded, isColExcluded, isRowExcluded } = useExcludedCheck(id)
   const toggleCell = useGridStore(s => s.toggleCell)

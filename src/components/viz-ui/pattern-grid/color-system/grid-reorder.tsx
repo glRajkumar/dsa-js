@@ -1,7 +1,7 @@
 import { DragDropProvider } from "@dnd-kit/react";
 import { move } from '@dnd-kit/helpers';
 
-import { useGridStore } from './grid-store';
+import { useGridData, useGridStore } from './grid-store';
 
 import { Button } from "@/components/shadcn-ui/button";
 import { Label } from "@/components/shadcn-ui/label";
@@ -13,8 +13,8 @@ import { Cells } from './cells';
 
 type props = { id: string }
 export function GridReorder({ id }: props) {
-  const colOrder = useGridStore(s => s.grids?.[id]?.colOrder)
-  const rowOrder = useGridStore(s => s.grids?.[id]?.rowOrder)
+  const colOrder = useGridData(id, s => s?.colOrder)
+  const rowOrder = useGridData(id, s => s?.rowOrder)
 
   const moveRow = useGridStore(s => s.moveRow)
   const moveCol = useGridStore(s => s.moveCol)

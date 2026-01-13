@@ -1,14 +1,14 @@
 
 import { colors, colorsT, shades, shadesT } from "@/utils/colors";
-import { flowT, useGridStore } from "./grid-store";
+import { flowT, useGridData, useGridStore } from "./grid-store";
 
 import { SelectWrapper } from "@/components/shadcn-ui/select";
 import { Label } from "@/components/shadcn-ui/label";
 
 export function Settings({ id }: { id: string }) {
-  const colorsStart = useGridStore(s => s.grids?.[id]?.colorsStart)
-  const shadesStart = useGridStore(s => s.grids?.[id]?.shadesStart)
-  const flow = useGridStore(s => s.grids?.[id]?.flow)
+  const colorsStart = useGridData(id, s => s?.colorsStart)
+  const shadesStart = useGridData(id, s => s?.shadesStart)
+  const flow = useGridData(id, s => s?.flow)
 
   const updateColorsStart = useGridStore(s => s.updateColorsStart)
   const updateShadesStart = useGridStore(s => s.updateShadesStart)

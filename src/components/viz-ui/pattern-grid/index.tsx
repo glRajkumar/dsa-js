@@ -179,7 +179,7 @@ export function PatternGridWithSettings(props: baseProps) {
         />
       }
 
-      <ColorsSystemModal />
+      <ColorsSystemModal id={id} />
     </div>
   )
 }

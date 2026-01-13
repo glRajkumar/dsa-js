@@ -2,7 +2,7 @@ import { GripHorizontal, GripVertical, X } from "lucide-react";
 import { DragOverlay, useDroppable } from "@dnd-kit/react";
 import { CollisionPriority } from "@dnd-kit/abstract";
 
-import { useExcludedCheck, useGridStore } from "./grid-store";
+import { useExcludedCheck, useGridData, useGridStore } from "./grid-store";
 import { cn } from "@/lib/utils";
 
 type props = { children: React.ReactNode, id: string }
@@ -17,9 +17,9 @@ export function Droppable({ children, id }: props) {
 }
 
 export function DropOverLay({ id }: { id: string }) {
-  const colOrder = useGridStore(s => s.grids?.[id]?.colOrder)
-  const rowOrder = useGridStore(s => s.grids?.[id]?.rowOrder)
-  const cellGrid = useGridStore(s => s.grids?.[id]?.cellGrid)
+  const colOrder = useGridData(id, s => s?.colOrder)
+  const rowOrder = useGridData(id, s => s?.rowOrder)
+  const cellGrid = useGridData(id, s => s?.cellGrid)
 
   return (
     <DragOverlay>
@@ -63,7 +63,7 @@ export function DropOverLay({ id }: { id: string }) {
 export function RowExclude({ id }: { id: string }) {
   const { isRowExcluded } = useExcludedCheck(id)
   const toggleRow = useGridStore(s => s.toggleRow)
-  const rowOrder = useGridStore(s => s.grids?.[id]?.rowOrder)
+  const rowOrder = useGridData(id, s => s?.rowOrder)
 
   return (
     <div>
@@ -88,7 +88,7 @@ export function RowExclude({ id }: { id: string }) {
 export function ColExclude({ id }: { id: string }) {
   const { isColExcluded } = useExcludedCheck(id)
   const toggleCol = useGridStore(s => s.toggleCol)
-  const colOrder = useGridStore(s => s.grids?.[id]?.colOrder)
+  const colOrder = useGridData(id, s => s?.colOrder)
 
   return (
     <div className="flex items-center">

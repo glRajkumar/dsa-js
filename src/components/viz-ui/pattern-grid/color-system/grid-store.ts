@@ -1,5 +1,8 @@
+import { useShallow } from 'zustand/shallow'
 import { create } from 'zustand'
-import { colors, shades, type colorsT, type shadesT, type bgT } from '@/utils/colors'
+
+import type { colorsT, shadesT, bgT } from '@/utils/colors'
+import { colors, shades } from '@/utils/colors'
 
 export type flowT = 'row' | 'col'
 
@@ -265,10 +268,14 @@ export const useGridStore = create<GridStore>((set) => ({
   }),
 }))
 
+export function useGridData<T>(id: string, selector: (s: GridState) => T) {
+  return useGridStore(useShallow(s => selector(s?.grids?.[id])))
+}
+
 export function useExcludedCheck(id: string) {
-  const excludedCells = useGridStore(s => s.grids?.[id]?.excludedCells)
-  const excludedRows = useGridStore(s => s.grids?.[id]?.excludedRows)
-  const excludedCols = useGridStore(s => s.grids?.[id]?.excludedCols)
+  const excludedCells = useGridData(id, s => s?.excludedCells)
+  const excludedRows = useGridData(id, s => s?.excludedRows)
+  const excludedCols = useGridData(id, s => s?.excludedCols)
 
   const isCellExcluded = (c: colorsT, s: shadesT) => excludedCells.has(`bg-${c}-${s}` as bgT)
   const isRowExcluded = (s: shadesT) => excludedRows.has(s)
